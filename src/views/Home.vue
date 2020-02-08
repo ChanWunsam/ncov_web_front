@@ -41,13 +41,13 @@
                 >
                 </el-date-picker>
               </el-form-item>
-              <el-form-item label="确诊人数" prop="number1">
+              <el-form-item label="新增确诊" prop="number1">
                 <el-input v-model="form.number1"></el-input>
               </el-form-item>
-              <el-form-item label="康复人数" prop="number2">
+              <el-form-item label="新增康复" prop="number2">
                 <el-input v-model="form.number2"></el-input>
               </el-form-item>
-              <el-form-item label="死亡人数" prop="number3">
+              <el-form-item label="新增死亡" prop="number3">
                 <el-input v-model="form.number3"></el-input>
               </el-form-item>
               <el-form-item label="源数据" prop="text">
@@ -139,9 +139,11 @@
       <table style="width:100%;margin:20px 0">
         <td>地区：{{ countData.countRegion }}</td>
         <td>日期：{{ new Date(countData.countDate).Format("yyyy-MM-dd") }}</td>
-        <td>确诊人数：{{ countData.countConfirm }}</td>
-        <td>康复人数：{{ countData.countRecover }}</td>
-        <td>死亡人数：{{ countData.countDead }}</td>
+        <td>新增确诊：{{ countData.countConfirm }}</td>
+        <td>新增康复：{{ countData.countRecover }}</td>
+        <td>新增死亡：{{ countData.countDead }}</td>
+        <td>源数据：{{ countData.countSourceText }}</td>
+        <td>源url：{{ countData.countSourceUrl }}</td>
       </table>
 
       <el-table :data="patData">
