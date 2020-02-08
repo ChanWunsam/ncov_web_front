@@ -131,6 +131,11 @@
         :disabled="inserting"
         >{{ inserting == true ? "提交中" : "提交" }}</el-button
       >
+      <!-- <el-button
+        type="primary"
+        @click=""
+        style="margin-top: 12px; "
+      > -->
     </el-footer>
 
     <p class="title">目前数据</p>
@@ -333,12 +338,10 @@ export default {
                       ],
                       sampleSex: this.cases[i].sex,
                       sampleAge: this.cases[i].age,
-                      sampleDate: new Date(this.form.date1).Format(
+                      sampleDate: new Date().Format(
                         "yyyy-MM-dd"
-                      ),
-                      sampleConfirmTime: new Date(this.cases[i].date).Format(
-                        "yyyy-MM-dd"
-                      ),
+                      ), // 录入的时间
+                      sampleConfirmTime: confirmDate,
                       sampleSourceUrl: this.cases[i].url,
                       sampleSourceText: this.cases[i].text,
                       sampleUserId: this.regionId
