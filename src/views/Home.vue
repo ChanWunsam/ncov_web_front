@@ -260,6 +260,7 @@ export default {
         //   locName
         // }
       },
+      readValue: "", // 用于解决selcet框回显value的bug
       rules2: {
         age: [{ validator: checkAge, trigger: "blur" }],
         sex: [{ validator: checkAge, trigger: "blur" }],
@@ -482,6 +483,8 @@ export default {
     },
     editPatScope(row) {
       row.edit = true
+      this.readValue = row.sampleSex
+      row.sampleSex = String(this.readValue)
       this.reload()
     },
     delPatScope(row, index) {
