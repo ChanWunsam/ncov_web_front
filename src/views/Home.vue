@@ -62,7 +62,7 @@
       </div>
     </div>
 
-    <el-footer style="border-bottom: 1px solid #eee">
+    <el-footer style="margin-bottom: 30px">
       <!-- 按钮组合 -->
       <el-button
         v-show="isInit"
@@ -78,13 +78,13 @@
         :disabled="inserting"
       >{{ inserting == true ? "提交中" : "提交" }}</el-button>
       <el-button
-        v-show="!isInit&&hasData&&hasModify"
+        v-show="!isInit&&hasData"
         type="warning"
         @click="onModify"
         style="margin-top: 12px; "
       > 修改 </el-button>
       <el-button
-        v-show="!isInit&&hasData&&!hasModify"
+        v-show="!isInit&&hasData"
         type="danger"
         @click="onDelete"
         style="margin-top: 12px; "
@@ -97,7 +97,11 @@
       > 返回 </el-button>
     </el-footer>
 
-    <p class="title" v-show="!isInit&&hasData">具体病例</p>
+    <p 
+      class="title" 
+      v-show="!isInit&&hasData"
+      style="border-bottom: 1px solid #eee; marigin: 10px 0px;"
+    >具体病例</p>
 
     <div style="padding:0px 40px;" id="nowData" v-show="!isInit&&hasData">
       <el-form
@@ -164,7 +168,7 @@
           <el-table-column label="操作">
             <template slot-scope="scope">
               <div v-if="scope.row.edit">
-                <el-button type="success" size="mini" @click="cfmPatScope(scope.$index, 'formPat')">
+                <el-button type="success" size="mini" @click="cfmPatScope(scope.row)">
                   <span>确认</span>
                 </el-button>
                 <el-button type="primary" size="mini" @click="cancelScope(scope.row, scope.$index)">
@@ -182,7 +186,11 @@
             </template>
           </el-table-column>
         </el-table>
-        <el-button type="primary" @click="addPatScope">添加病例</el-button> 
+        <el-button 
+          type="primary" 
+          @click="addPatScope"
+          style="margin-top: 10px"
+        >添加病例</el-button> 
       </el-form>
     </div>
   </div>
@@ -266,7 +274,7 @@ export default {
       hasDetailCase: false,
       isInit: true, // 页面初始化时，只显示地区、时间两个框和确认按钮（只有页面初始化时才可修改地区、时间）
       hasData: false, // 点击确认按钮后，是否有疫情数据，无的话显示提交按钮，反之则无
-      hasModify: false, // 监控数据是否有修改，有的话显示修改按钮，无则无
+      firstInit: true, // 数据是否刚初始化成功（用于辅助显示修改按钮）
       props: {
         lazy: true,
         checkStrictly: true,
@@ -318,14 +326,12 @@ export default {
       this.clearData()
       this.isInit = true
       this.hasData = false
-      this.hasModify = false
     },
     onSubmit() {
       this.inserting = true;
-      var confirmDate = new Date(this.form.date1).Format("yyyy-MM-dd"); // 疫情信息所公布日期
       var params_count = {
         countRegionId: this.form.region[this.form.region.length - 1],
-        countDate: confirmDate,
+        countDate: new Date(this.form.date1).Format("yyyy-MM-dd"),
         countConfirm: this.form.number1,
         countRecover: this.form.number2,
         countDead: this.form.number3,
@@ -342,7 +348,8 @@ export default {
             isEmpty(params_count.countSourceText) ||
             isEmpty(params_count.countSourceUrl)
           ) {
-            this.$message("请填写完整")
+            this.$message("请填写完整，或输入有效数据")
+            this.inserting = false;
             return false
           }
           //只更新count
@@ -350,6 +357,7 @@ export default {
             .then(res => {
               if(res.status === 0) {
                 this.$message("插入成功");
+                this.hasData = true
               } else {
                 this.$message(res.desc)
               }
@@ -362,29 +370,31 @@ export default {
         }
       });
     },
-    onModify() {
-      var param = {
-        id: this.form.id,
-        countRegionId: this.form.region[this.form.region.length - 1],
-        countDate: new Date(this.form.date1).Format("yyyy-MM-dd"),
-        countConfirm: this.form.number1,
-        countRecover: this.form.number2,
-        countDead: this.form.number3,
-        countSourceUrl: this.form.url,
-        countSourceText: this.form.text,
-        countUserId: this.regionId
-      };
-      modifyCount(param).then(res => {
-        if(res.data.status == 0) {
-          this.hasModify = false
-          this.$message("修改成功")
-        } else {
-          this.$message(res.desc)
-        }
-      })
-    },
-    onDelete() {
-      this.$confirm("确认删除？")
+    onModify() { // todo 测试
+      this.$confirm("确认修改？")
+        .then(() => {
+          var param = {
+            id: this.form.id,
+            countRegionId: this.form.region[this.form.region.length - 1],
+            countDate: new Date(this.form.date1).Format("yyyy-MM-dd"),
+            countConfirm: this.form.number1,
+            countRecover: this.form.number2,
+            countDead: this.form.number3,
+            countSourceUrl: this.form.url,
+            countSourceText: this.form.text,
+            countUserId: this.regionId
+          };
+          modifyCount(param).then(res => {
+            if(res.data.status == 0) {
+              this.$message("修改成功")
+            } else {
+              this.$message(res.desc)
+            }
+          })
+        })
+    }, 
+    onDelete() { // todo 测试
+      this.$confirm("确认删除？") // 确认删除该信息及所有病例
         .then(() => {
           deleteCount(this.form.id).then((res) => {
             if(res.status == 0) {
@@ -411,62 +421,59 @@ export default {
         locName: ""
       })
     },
-    cfmPatScope(index, formName) {
-      // this.$refs[formName].validate((valid) => {
-      //   if (valid) {
-          var pat = {
-            sampleRegionId: this.form.region[
-              this.form.region.length - 1
-            ],
-            sampleSex: this.formPat.patData[index].sampleSex,
-            sampleAge: this.formPat.patData[index].sampleAge,
-            sampleDate: new Date().Format(
-              "yyyy-MM-dd"
-            ), // 录入的时间
-            sampleConfirmTime: new Date(this.form.date1).Format(
-              "yyyy-MM-dd"
-            ),
-            sampleSourceUrl: this.formPat.patData[index].sampleSourceUrl,
-            sampleSourceText: this.formPat.patData[index].sampleSourceText,
-            sampleUserId: this.regionId
-          }
-          if(this.isEmpty(this.formPat.patData[index].id)) {
-            insertCases([pat]).then((res) => {
-              if(res.status === 0) {
-                this.$message("新增成功");
-                this.formPat.patData[index].edit = false;
-                this.getPat(this.searchForm)
-                this.reload() 
-              } else {
-                this.$message(res.desc)
-              }
-            })
-            // .finally(() => {
-            //   this.formPat.patData[index].edit = false
-            //   this.reload()
-            // });
+    cfmPatScope(row) {
+      var isEmpty = this.isEmpty
+      if (isEmpty(row.sampleSex) ||
+        isEmpty(row.sampleAge) ||
+        isEmpty(row.sampleSourceText) ||
+        isEmpty(row.sampleSourceUrl)
+      ) {
+        this.$message("请填写完整，或输入有效数据")
+        return false
+      }
+      var pat = {
+        sampleRegionId: this.form.region[
+          this.form.region.length - 1
+        ],
+        sampleSex: row.sampleSex,
+        sampleAge: row.sampleAge,
+        sampleDate: new Date().Format(
+          "yyyy-MM-dd"
+        ), // 录入的时间
+        sampleConfirmTime: new Date(this.form.date1).Format(
+          "yyyy-MM-dd"
+        ),
+        sampleSourceUrl: row.sampleSourceUrl,
+        sampleSourceText: row.sampleSourceText,
+        sampleUserId: this.regionId
+      }
+      if(!row.id) {
+        insertCases([pat]).then((res) => {
+          if(res.status === 0) {
+            this.$message("添加成功");
+            row.edit = false;
+            this.getPat(this.searchForm)
+            this.reload() 
           } else {
-            pat.id = this.formPat.patData[index].id
-            // todo 这里可以用数组吗？？？
-            modifyCase(pat).then((res) => {
-              if(res.status === 0) {
-                this.$message("修改成功");
-                this.formPat.patData[index].edit = false;
-                this.reload()
-              } else {
-                this.$message(res.desc)
-              }
-            })
-            // .finally(() => {
-            //   this.formPat.patData[index].edit = false
-            //   this.reload()
-            // });
+            this.$message(res.desc)
           }
-        // }
-      // })
+        })
+      } else {
+        pat.id = row.id
+        // todo 这里可以用数组吗？？？
+        modifyCase(pat).then((res) => { // todo 测试
+          if(res.status === 0) {
+            this.$message("修改成功");
+            row.edit = false;
+            this.reload()
+          } else {
+            this.$message(res.desc)
+          }
+        })
+      }
     },
     cancelScope(row, index) {
-      if(this.isEmpty(row.id)) {
+      if(!row.id) {
         this.formPat.patData.splice(index, 1);
       } else {
         row.edit = false
@@ -509,13 +516,13 @@ export default {
     getForm(params) {
       getCount(params).then(res => {
         if (res.status === 0) {
-          this.hasData = true
           var data = res.Counts
           this.form.number1 = data.countConfirm
           this.form.number2 = data.countRecover
           this.form.number3 = data.countDead
           this.form.text = data.countSourceText
           this.form.url = data.countSourceUrl
+          this.hasData = true
         } else {
           this.$message(res.desc);
         }
@@ -545,8 +552,9 @@ export default {
 
       this.$router.push({ name: "login" });
     },
+    // 注：仅用于判断输入值是否符合
     isEmpty(value) {
-      if (!value || value == "" && value !== 0) { // value == 0 也不是 empty
+      if (!value && Number(value) !== 0) { // value == 0 也不是 empty
         return true;
       } else {
         return false;
@@ -554,22 +562,11 @@ export default {
     },
   },
   watch: {
-    form: {
-      handler: function() {
-        var isEmpty = this.isEmpty;
-        var form = this.form
-        if (
-          !isEmpty(form.countConfirm) ||
-          !isEmpty(form.countRecover) ||
-          !isEmpty(form.countDead) ||
-          !isEmpty(form.countSourceText) ||
-          !isEmpty(form.countSourceUrl)
-        ) {
-          this.hasModify = true
-        }
-      },
-      deep: true
-    }
+    // form: {
+    //   handler: function() {
+    //   },
+    //   deep: true
+    // }
   },
   mounted() {
     (function() {
