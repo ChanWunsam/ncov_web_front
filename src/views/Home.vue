@@ -29,6 +29,7 @@
               <el-form-item label="地区" prop="region">
                 <el-cascader
                   :props="props"
+                  :disabled="!isInit"
                   v-model="form.region"
                   clearable
                 ></el-cascader>
@@ -37,6 +38,7 @@
                 <el-date-picker
                   v-model="form.date1"
                   type="date"
+                  :disabled="!isInit"
                   placeholder="选择日期"
                 >
                 </el-date-picker>
