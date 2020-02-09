@@ -252,23 +252,6 @@ export default {
         //   locName
         // }
       },
-      // countData: {
-      //   countDate: 0,
-      //   countConfirm: 0,
-      //   countRecover: 0,
-      //   countDead: 0,
-      //   countText: "",
-      //   countRegion: ""
-      // },
-      // cases: [
-      //   {
-      //     age: null,
-      //     sex: null,
-      //     date: null,
-      //     url: null,
-      //     text: null
-      //   }
-      // ],
       rules2: {
         age: [{ validator: checkAge, trigger: "blur" }],
         sex: [{ validator: checkAge, trigger: "blur" }],
@@ -325,10 +308,6 @@ export default {
 
     onShow() {
       this.isInit = false
-      // this.searchForm = {
-      //   region: this.form.region,
-      //   date: this.form.date1
-      // }
       this.searchForm = {
         locId: this.form.region[this.form.region.length - 1],
         date: new Date(this.form.date1).Format("yyyy-MM-dd")
@@ -355,24 +334,25 @@ export default {
         countUserId: this.regionId
       };
       var isEmpty = this.isEmpty;
-      if (
-        isEmpty(params_count.countConfirm) ||
-        isEmpty(params_count.countRecover) ||
-        isEmpty(params_count.countDead) ||
-        isEmpty(params_count.countSourceText) ||
-        isEmpty(params_count.countSourceUrl)
-      ) {
-        this.$message("请将表格栏填写完整！")
-        return false
-      }
       this.$refs["form"].validate(valid => {
         if (valid) {
+          if (isEmpty(params_count.countConfirm) ||
+            isEmpty(params_count.countRecover) ||
+            isEmpty(params_count.countDead) ||
+            isEmpty(params_count.countSourceText) ||
+            isEmpty(params_count.countSourceUrl)
+          ) {
+            this.$message("请填写完整")
+            return false
+          }
           //只更新count
           insertCount(params_count)
             .then(res => {
-              console.log(res);
-              this.$message("插入成功");
-              // this.onReturn()
+              if(res.status === 0) {
+                this.$message("插入成功");
+              } else {
+                this.$message(res.desc)
+              }
             })
             .finally(() => {
               this.inserting = false;
@@ -384,7 +364,7 @@ export default {
     },
     onModify() {
       var param = {
-        id: this.form.id, // todo id???没有返回
+        id: this.form.id,
         countRegionId: this.form.region[this.form.region.length - 1],
         countDate: new Date(this.form.date1).Format("yyyy-MM-dd"),
         countConfirm: this.form.number1,
@@ -394,18 +374,28 @@ export default {
         countSourceText: this.form.text,
         countUserId: this.regionId
       };
-      // modifyCount(param).then(res => {
-      //   if(res.data.status == 0) {
-      //     this.hasModify = false
-      //   }
-      // })
+      modifyCount(param).then(res => {
+        if(res.data.status == 0) {
+          this.hasModify = false
+          this.$message("修改成功")
+        } else {
+          this.$message(res.desc)
+        }
+      })
     },
     onDelete() {
-      // this.deleteCount().then(() => {
-      //   if(res.data.status == 0) {
-      //     this.onReturn()
-      //   }
-      // })
+      this.$confirm("确认删除？")
+        .then(() => {
+          deleteCount(this.form.id).then((res) => {
+            if(res.status == 0) {
+              // todo 要确认这里是否也删除了病例
+              this.$message("删除成功")
+              this.onReturn()
+            } else {
+              this.$message(res.desc)
+            }
+          })
+        }).catch(() => {});
     },
 
     // 添加/确认/编辑/删除 表单里的病例栏
@@ -422,7 +412,6 @@ export default {
       })
     },
     cfmPatScope(index, formName) {
-      // row.edit = false
       // this.$refs[formName].validate((valid) => {
       //   if (valid) {
           var pat = {
@@ -442,21 +431,36 @@ export default {
             sampleUserId: this.regionId
           }
           if(this.isEmpty(this.formPat.patData[index].id)) {
-            insertCases([pat]).then(() => {
-              this.$message("新增成功");
-              this.formPat.patData[index].edit = false;
-              // todo 这里也可以让后台查询时返回一个id数据，直接更新
-              this.getPat(this.searchForm)
-              this.reload()
-            });
+            insertCases([pat]).then((res) => {
+              if(res.status === 0) {
+                this.$message("新增成功");
+                this.formPat.patData[index].edit = false;
+                this.getPat(this.searchForm)
+                this.reload() 
+              } else {
+                this.$message(res.desc)
+              }
+            })
+            // .finally(() => {
+            //   this.formPat.patData[index].edit = false
+            //   this.reload()
+            // });
           } else {
             pat.id = this.formPat.patData[index].id
             // todo 这里可以用数组吗？？？
-            modifyCase(pat).then(() => {
-              this.$message("修改成功");
-              this.formPat.patData[index].edit = false;
-              this.reload()
+            modifyCase(pat).then((res) => {
+              if(res.status === 0) {
+                this.$message("修改成功");
+                this.formPat.patData[index].edit = false;
+                this.reload()
+              } else {
+                this.$message(res.desc)
+              }
             })
+            // .finally(() => {
+            //   this.formPat.patData[index].edit = false
+            //   this.reload()
+            // });
           }
         // }
       // })
@@ -495,7 +499,6 @@ export default {
         url: null
       },
       this.formPat.patData = [];
-      this.delPatData = [];
       this.searchForm = {}
     },
 
@@ -526,163 +529,11 @@ export default {
             item.edit = false
           })
         } else {
-          // todo 是否要删除提示
-          // this.$message(res.desc);
+          this.$message(res.desc);
         }
       })
     },
 
-
-
-//=====================================================
-    // onSubmit2() {
-    //   this.inserting = true;
-    //   var params_count = {
-    //     countRegionId: this.form.region[this.form.region.length - 1],
-    //     countDate: new Date(this.form.date1).Format("yyyy-MM-dd"),
-    //     countConfirm: this.form.number1 || 0,
-    //     countRecover: this.form.number2 || 0,
-    //     countDead: this.form.number3 || 0,
-    //     countSourceUrl: this.form.url,
-    //     countSourceText: this.form.text,
-    //     countUserId: this.regionId
-    //   };
-    //   var isEmpty = this.isEmpty;
-    //   this.$refs["form"].validate(valid => {
-    //     if (valid) {
-    //       if (
-    //         //只有region和date  只查询
-    //         isEmpty(params_count.countConfirm) &&
-    //         isEmpty(params_count.countRecover) &&
-    //         isEmpty(params_count.countDead) &&
-    //         isEmpty(params_count.countSourceText) &&
-    //         isEmpty(params_count.countSourceUrl)
-    //       ) {
-    //         this.searchForm = {
-    //           region: this.form.region,
-    //           date: this.form.date1
-    //         };
-    //         this.inserting = false;
-    //       } else {
-    //         //更新加查询
-    //         if (this.hasDetailCase == true) {
-    //           //两种都更新
-    //           insertCount(params_count)
-    //             .then(() => {
-    //               var params_cases = [];
-    //               for (let i = 0; i < this.cases.length; i++) {
-    //                 params_cases.push({
-    //                   sampleRegionId: this.form.region[
-    //                     this.form.region.length - 1
-    //                   ],
-    //                   sampleSex: this.cases[i].sex,
-    //                   sampleAge: this.cases[i].age,
-    //                   sampleDate: new Date().Format(
-    //                     "yyyy-MM-dd"
-    //                   ), // 录入的时间
-    //                   sampleConfirmTime: confirmDate,
-    //                   sampleSourceUrl: this.cases[i].url,
-    //                   sampleSourceText: this.cases[i].text,
-    //                   sampleUserId: this.regionId
-    //                 });
-    //               }
-    //               insertCases(params_cases).then(() => {
-    //                 this.$message("插入成功");
-    //                 this.searchForm = {
-    //                   region: this.form.region,
-    //                   date: this.form.date1
-    //                 };
-    //               });
-    //             })
-    //             .finally(() => {
-    //               this.inserting = false;
-    //             });
-    //         } else {
-    //           //只更新count
-    //           insertCount(params_count)
-    //             .then(res => {
-    //               console.log(res);
-    //               this.$message("插入成功");
-    //               this.searchForm = {
-    //                 region: this.form.region,
-    //                 date: this.form.date1
-    //               };
-    //             })
-    //             .finally(() => {
-    //               this.inserting = false;
-    //             });
-    //         }
-    //       }
-    //     } else {
-    //       this.inserting = false;
-    //     }
-    //   });
-    // },
-    // addCase() {
-    //   this.cases = this.cases.concat([
-    //     {
-    //       age: null,
-    //       sex: null,
-    //       date: null,
-    //       url: null,
-    //       text: null
-    //     }
-    //   ]);
-    // },
-    // delCase(index) {
-    //   this.cases.splice(index, 1);
-    // },
-    // getPatData(params) {
-    //   this.axios
-    //     .post(
-    //       "/api/info/getPat",
-    //       qs.stringify({
-    //         locId: params.region[params.region.length - 1],
-    //         date: new Date(params.date).Format("yyyy-MM-dd")
-    //       })
-    //     )
-    //     .then(res => {
-    //       if (res.data.status == 0) {
-    //         this.formPat.patData = res.data.Patients;
-    //       } else {
-    //         this.$message(res.data.desc);
-    //       }
-    //     });
-    //   this.axios
-    //     .post(
-    //       "/api/info/getCount",
-    //       qs.stringify({
-    //         locId: params.region[params.region.length - 1],
-    //         date: new Date(params.date).Format("yyyy-MM-dd")
-    //       })
-    //     )
-    //     .then(res => {
-    //       if (res.data != "") {
-    //         if (res.data.status == 0) {
-    //           this.countData = res.data.Counts;
-    //           this.countData.countDate = String(this.form.date1);
-    //           var region = res.data.Counts.locName.replace("null-", "");
-    //           this.countData.countRegion = region;
-    //         } else {
-    //           this.$message(res.data.desc);
-    //         }
-    //       }
-    //     });
-    //   this.form.number1 = null;
-    //   this.form.number2 = null;
-    //   this.form.number3 = null;
-    //   this.form.text = "";
-    //   this.form.url = "";
-    //   this.cases = [
-    //     {
-    //       age: null,
-    //       sex: null,
-    //       date: null,
-    //       url: null,
-    //       text: null
-    //     }
-    //   ];
-    // },
     logout() {
       // eslint-disable-next-line no-useless-escape
       var keys = document.cookie.match(/[^ =;]+(?=\=)/g);
@@ -695,42 +546,27 @@ export default {
       this.$router.push({ name: "login" });
     },
     isEmpty(value) {
-      if (!value || value == "" || value == 0) {
+      if (!value || value == "" && value !== 0) { // value == 0 也不是 empty
         return true;
       } else {
         return false;
       }
     },
-    // handleDelete(index, row) {
-    //   this.$confirm("确认删除？")
-    //     .then(() => {
-    //       this.axios
-    //         .post("/api/sample/delete", qs.stringify({ patId: row.id }))
-    //         .then(res => {
-    //           if (res.data.status == 0) {
-    //             //成功
-    //             this.getPatData(this.searchForm);
-    //             // eslint-disable-next-line no-undef
-    //             // done();
-    //           }
-    //         });
-    //     })
-    //     .catch(() => {});
-    // }
-
-
   },
   watch: {
-    // searchForm: {
-    //   handler: function() {
-    //     this.getPatData(this.searchForm);
-    //     //do something
-    //   },
-    //   deep: true
-    // },
     form: {
       handler: function() {
-        console.log(this.form)
+        var isEmpty = this.isEmpty;
+        var form = this.form
+        if (
+          !isEmpty(form.countConfirm) ||
+          !isEmpty(form.countRecover) ||
+          !isEmpty(form.countDead) ||
+          !isEmpty(form.countSourceText) ||
+          !isEmpty(form.countSourceUrl)
+        ) {
+          this.hasModify = true
+        }
       },
       deep: true
     }
