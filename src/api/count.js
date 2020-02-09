@@ -21,6 +21,40 @@ function Msg(error) {
   })
 }
 
+function getCount(params) {
+
+  return new Promise(function (resolve, reject) {
+    request.post("/api/info/getCount", qs.stringify(params)).then(res => {
+      if (res.data.status == 0) {
+        resolve(res.data)
+      } else {
+        Msg(res.data.desc)
+        reject(res.data)
+      }
+    }).catch(err => {
+      erroeMsg(err)
+      reject(err)
+    })
+  })
+}
+
+function getCase(params) {
+  
+  return new Promise(function(resolve, reject) {
+    request.post("/api/info/getPat", qs.stringify(params)).then(res => {
+      if (res.data.status == 0) {
+        resolve(res.data)
+      } else {
+        Msg(res.data.desc)
+        reject(res.data)
+      }
+    })
+  }).catch(err => {
+    erroeMsg(err)
+    reject(err)
+  })
+}
+
 //insert count
 
 function insertCount(params) {
@@ -93,10 +127,45 @@ function modifyCase(param) {
   )
 }
 
+function deleteCase(id) {
+  return new Promise(function (resolve, reject) {
+    request.post("/api/sample/delete", qs.stringify({ patId: id })).then(res => {
+      if (res.data.status == 0) {
+        resolve(res.data)
+      } else {
+        Msg(res.data.desc)
+        reject(res.data)
+      }
+    }).catch(err => {
+      erroeMsg(err)
+      reject(err)
+    })
+  })
+}
+
+function deleteCount(id) {
+  return new Promise(function (resolve, reject) {
+    request.post("/api/count/delete", qs.stringify({ countId: id })).then(res => {
+      if (res.data.status == 0) {
+        resolve(res.data)
+      } else {
+        Msg(res.data.desc)
+        reject(res.data)
+      }
+    }).catch(err => {
+      erroeMsg(err)
+      reject(err)
+    })
+  })
+}
 
 export {
+  getCount,
+  getCase,
   insertCount,
   insertCases,
   modifyCount,
-  modifyCase
+  modifyCase,
+  deleteCase,
+  deleteCount
 }

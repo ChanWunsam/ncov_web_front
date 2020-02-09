@@ -41,160 +41,161 @@
                 >
                 </el-date-picker>
               </el-form-item>
-              <el-form-item label="新增确诊" prop="number1">
+              <el-form-item label="新增确诊" prop="number1" v-show="!isInit">
                 <el-input v-model="form.number1"></el-input>
               </el-form-item>
-              <el-form-item label="新增康复" prop="number2">
+              <el-form-item label="新增康复" prop="number2" v-show="!isInit">
                 <el-input v-model="form.number2"></el-input>
               </el-form-item>
-              <el-form-item label="新增死亡" prop="number3">
+              <el-form-item label="新增死亡" prop="number3" v-show="!isInit">
                 <el-input v-model="form.number3"></el-input>
               </el-form-item>
-              <el-form-item label="源数据" prop="text">
+              <el-form-item label="源数据" prop="text" v-show="!isInit">
                 <el-input type="textarea" v-model="form.text"></el-input>
               </el-form-item>
-              <el-form-item label="源url" prop="url">
+              <el-form-item label="源url" prop="url" v-show="!isInit">
                 <el-input type="textarea" v-model="form.url"></el-input>
-              </el-form-item>
-              <el-form-item label="有详细病例">
-                <el-switch v-model="hasDetailCase"></el-switch>
               </el-form-item>
             </el-form>
           </el-main>
         </el-container>
       </div>
-      <div
-        class="flex-item"
-        v-if="hasDetailCase"
-        style="width:1000px;height:500px;overflow-y:auto"
-      >
-        <div class="flex-box2">
-          <div
-            class=""
-            style="padding:5px;margin:0 5px;border:0px dashed gray;width:45%"
-            v-for="(item, index) in cases"
-            :key="index"
-          >
-            <el-form
-              :ref="'case' + index"
-              :model="item"
-              :rules="rules2"
-              label-width="90px"
-            >
-              <el-form-item label="年龄" prop="age">
-                <el-input v-model="item.age"></el-input>
-              </el-form-item>
-              <el-form-item label="性别" prop="sex">
-                <!-- <el-input v-model="item.sex"></el-input> -->
-                <el-select v-model="item.sex" placeholder="">
-                  <el-option label="男" value="0"></el-option>
-                  <el-option label="女" value="1"></el-option>
-                </el-select>
-              </el-form-item>
-              <el-form-item label="确诊日期" prop="date">
-                <el-date-picker
-                  v-model="item.date"
-                  type="date"
-                  placeholder="选择日期"
-                >
-                </el-date-picker>
-              </el-form-item>
-              <el-form-item label="源数据" prop="text">
-                <el-input type="textarea" v-model="item.text"></el-input>
-              </el-form-item>
-              <el-form-item label="源url" prop="url">
-                <el-input type="textarea" v-model="item.url"></el-input>
-              </el-form-item>
-              <el-form-item>
-                <el-button
-                  @click="delCase(index)"
-                  type="danger"
-                  icon="el-icon-delete"
-                  circle
-                >
-                </el-button>
-              </el-form-item>
-            </el-form>
-          </div>
-          <div style="width:45%">
-            <el-button @click="addCase" type="">加一条</el-button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <el-footer style="border-bottom: 1px solid #eee">
+      <!-- 按钮组合 -->
       <el-button
+        v-show="isInit"
         type="primary"
-        @click="onSubmit2"
+        @click="onShow"
+        style="margin-top: 12px; "
+      > 确认 </el-button>
+      <el-button
+        v-show="!isInit&&!hasData"
+        type="primary"
+        @click="onSubmit"
         style="margin-top: 12px; "
         :disabled="inserting"
-        >{{ inserting == true ? "提交中" : "提交" }}</el-button
-      >
-      <!-- <el-button
-        type="primary"
-        @click=""
+      >{{ inserting == true ? "提交中" : "提交" }}</el-button>
+      <el-button
+        v-show="!isInit&&hasData&&hasModify"
+        type="warning"
+        @click="onModify"
         style="margin-top: 12px; "
-      > -->
+      > 修改 </el-button>
+      <el-button
+        v-show="!isInit&&hasData&&!hasModify"
+        type="danger"
+        @click="onDelete"
+        style="margin-top: 12px; "
+      > 删除 </el-button>
+      <el-button
+        v-show="!isInit"
+        type="default"
+        @click="onReturn"
+        style="margin-top: 12px; "
+      > 返回 </el-button>
     </el-footer>
 
-    <p class="title">目前数据</p>
+    <p class="title" v-show="!isInit">目前数据</p>
 
-    <div style="padding:0px 40px;" id="nowData">
-      <table style="width:100%;margin:20px 0">
-        <td>地区：{{ countData.countRegion }}</td>
-        <td>日期：{{ new Date(countData.countDate).Format("yyyy-MM-dd") }}</td>
-        <td>新增确诊：{{ countData.countConfirm }}</td>
-        <td>新增康复：{{ countData.countRecover }}</td>
-        <td>新增死亡：{{ countData.countDead }}</td>
-        <td>源数据：{{ countData.countSourceText }}</td>
-        <td>源url：{{ countData.countSourceUrl }}</td>
-      </table>
-
-      <el-table :data="patData">
-        <el-table-column property="id" label="id"></el-table-column>
-        <el-table-column property="locName" label="地区">
-          <template slot-scope="scope">
-            {{ scope.row.locName.replace("null-", "") }}
-          </template>
-        </el-table-column>
-
-        <el-table-column property="sampleAge" label="年龄"></el-table-column>
-        <el-table-column property="sampleSex" label="性别">
-          <template slot-scope="scope">
-            {{ scope.row.sampleSex == 0 ? "男" : "女" }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          property="sampleConfirmTime"
-          label="确诊日期"
-        ></el-table-column>
-        <el-table-column
-          property="sampleSourceText"
-          label="源数据"
-        ></el-table-column>
-        <el-table-column
-          property="sampleSourceUrl"
-          label="源url"
-        ></el-table-column>
-        <el-table-column label="操作">
-          <template slot-scope="scope">
-            <el-button
-              size="mini"
-              type="danger"
-              @click="handleDelete(scope.$index, scope.row)"
-              >删除</el-button
-            >
-          </template>
-        </el-table-column>
-      </el-table>
+    <div style="padding:0px 40px;" id="nowData" v-show="!isInit">
+      <el-form
+        :ref="patData"
+        :model="patData"
+        label-width="90px"
+      >
+        <el-table 
+          :data="patData"
+        >
+          <el-table-column property="sampleAge" label="年龄">
+            <template slot-scope="scope">
+              <el-form-item v-if="scope.row.edit" 
+                :prop="'patData.' + scope.$index + '.sampleAge'" 
+                :rules="rule2.age"
+              >
+                <el-input v-model="scope.row.sampleAge" placeholder=""></el-input>
+              </el-form-item>
+              <span v-else>{{scope.row.sampleAge}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column property="sampleSex" label="性别">
+            <template slot-scope="scope">
+              <el-form-item v-if="scope.row.edit" 
+                :prop="'patData.' + scope.$index + '.sampleSex'" 
+                :rules="rule2.sex"
+              >
+                <el-select v-model="scope.row.sampleSex" placeholder="">
+                  <el-option label="男" value="0">男</el-option>
+                  <el-option label="女" value="1">女</el-option>
+                </el-select>
+              </el-form-item>
+              <span v-else>
+                <p v-if="scope.row.sampleSex==0">男</p>
+                <p v-if="scope.row.sampleSex==1">女</p>
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            property="sampleSourceText"
+            label="源数据"
+          >
+            <template slot-scope="scope">
+              <el-form-item v-if="scope.row.edit" 
+                :prop="'patData.' + scope.$index + '.sampleSourceText'"
+              >
+                <el-input v-model="sampleSourceText" placeholder=""></el-input>
+              </el-form-item>
+              <span v-else>{{scope.row.sampleSourceText}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            property="sampleSourceUrl"
+            label="源url"
+          >
+            <template slot-scope="scope">
+              <el-form-item v-if="scope.row.edit" 
+                :prop="'patData.' + scope.$index + '.sampleSourceUrl'"
+              >
+                <el-input v-model="sampleSourceUrl" placeholder=""></el-input>
+              </el-form-item>
+              <span v-else>{{scope.row.sampleSourceUrl}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作">
+            <template slot-scope="scope">
+              <el-button v-if="scope.row.edit" type="success" size="mini" @click="cfmPatScope(scope.row, 'patData')">
+                <span>确认</span>
+              </el-button>
+              <div v-else>
+                <el-button type="primary" size="mini" @click="editPatScope(scope.row)">
+                  <span>编辑</span>
+                </el-button>
+                <el-button type="danger" size="mini" @click="delPatScope(scope.row,scope.$index)">
+                  <span>删除</span>
+                </el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-button type="primary" @click="addPatScope">添加病例</el-button> 
+      </el-form>
     </div>
   </div>
 </template>
 
 <script>
 import qs from "query-string";
-import { insertCount, insertCases } from "@/api/count.js";
+import { 
+  getCount, 
+  getCase,
+  insertCount,
+  insertCases,
+  modifyCount,
+  modifyCase,
+  deleteCase,
+  deleteCount 
+} from "@/api/count.js";
 
 export default {
   name: "home",
@@ -223,9 +224,9 @@ export default {
       form: {
         region: "",
         date1: "",
-        number1: null,
-        number2: null,
-        number3: null,
+        number1: null, // 确诊
+        number2: null, // 康复
+        number3: null, // 死亡
         text: null,
         url: null
       },
@@ -264,6 +265,9 @@ export default {
         region: [{ required: true, message: "不能为空", trigger: "blur" }]
       },
       hasDetailCase: false,
+      isInit: true, // 页面初始化时，只显示地区、时间两个框和确认按钮（只有页面初始化时才可修改地区、时间）
+      hasData: false, // 点击确认按钮后，是否有疫情数据，无的话显示提交按钮，反之则无
+      hasModify: false, // 监控数据是否有修改，有的话显示修改按钮，无则无
       props: {
         lazy: true,
         checkStrictly: true,
@@ -478,6 +482,8 @@ export default {
         })
         .catch(() => {});
     }
+
+
   },
   watch: {
     searchForm: {
