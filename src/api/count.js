@@ -58,11 +58,45 @@ function insertCases(params) {
   })
 }
 
+function modifyCount(param) {
+
+  return new Promise(function (resolve, reject) {
+    request.post("/api/count/update", param).then(res => {
+      if (res.data.status == 0) {
+        resolve(res.data)
+      } else {
+        Msg(res.data.desc)
+        reject(res.data)
+      }
+    }).catch(err => {
+      erroeMsg(err)
+      reject(err)
+    })
+  })
+}
 
 
+function modifyCase(param) {
+
+  return new Promise(
+    request.post("/api/sample/update", param).then(res => {
+      if (res.data.status == 0) {
+        resolve(res.data)
+      } else {
+        Msg(res.data.desc)
+        reject(res.data)
+      }
+    }).catch(err => {
+      erroeMsg(err)
+      reject(err)
+    })
+  )
+}
 
 
 export {
   insertCount,
-  insertCases
+  insertCases,
+  modifyCount,
+  modifyCase
 }
