@@ -43,19 +43,19 @@
                 >
                 </el-date-picker>
               </el-form-item>
-              <el-form-item label="新增确诊" prop="number1" v-show="!isInit">
+              <el-form-item label="新增确诊" prop="number1">
                 <el-input v-model="form.number1"></el-input>
               </el-form-item>
-              <el-form-item label="新增康复" prop="number2" v-show="!isInit">
+              <el-form-item label="新增康复" prop="number2">
                 <el-input v-model="form.number2"></el-input>
               </el-form-item>
-              <el-form-item label="新增死亡" prop="number3" v-show="!isInit">
+              <el-form-item label="新增死亡" prop="number3">
                 <el-input v-model="form.number3"></el-input>
               </el-form-item>
-              <el-form-item label="源数据" prop="text" v-show="!isInit">
+              <el-form-item label="源数据" prop="text">
                 <el-input type="textarea" v-model="form.text"></el-input>
               </el-form-item>
-              <el-form-item label="源url" prop="url" v-show="!isInit">
+              <el-form-item label="源url" prop="url">
                 <el-input type="textarea" v-model="form.url"></el-input>
               </el-form-item>
             </el-form>
@@ -66,46 +66,46 @@
 
     <el-footer style="margin-bottom: 30px">
       <!-- 按钮组合 -->
-      <el-button
+      <!-- <el-button
         v-show="isInit"
         type="primary"
         @click="onShow"
         style="margin-top: 12px; "
-      > 确认 </el-button>
+      > 确认 </el-button> -->
       <el-button
-        v-show="!isInit&&!hasData"
+        v-show="!hasData"
         type="primary"
         @click="onSubmit"
         style="margin-top: 12px; "
-        :disabled="inserting"
-      >提交后返回</el-button>
+        :disabled="disabledBtn"
+      >查询/提交</el-button>
       <el-button
-        v-show="!isInit&&hasData"
+        v-show="hasData"
         type="warning"
         @click="onModify"
         style="margin-top: 12px; "
-      >{{ inserting == true ? "修改中" : "修改后返回" }}</el-button>
+        :disabled="disabledBtn"
+      >修改</el-button>
       <el-button
-        v-show="!isInit&&hasData"
+        v-show="hasData"
         type="danger"
         @click="onDelete"
         style="margin-top: 12px; "
-      > 删除后返回 </el-button>
+        :disabled="disabledBtn"
+      >删除</el-button>
       <el-button
         v-show="!isInit"
         type="default"
         @click="onReturn"
         style="margin-top: 12px; "
-      > 返回 </el-button>
+      >取消</el-button>
     </el-footer>
 
     <p 
       class="title" 
-      v-show="!isInit&&hasData"
       style="border-bottom: 1px solid #eee; marigin: 10px 0px;"
     >具体病例</p>
-
-    <div style="padding:0px 40px;" id="nowData" v-show="!isInit&&hasData">
+    <div style="padding:0px 40px;" id="nowData">
       <el-form
         :ref="formPat"
         :model="formPat"
@@ -171,7 +171,7 @@
             <template slot-scope="scope">
               <div v-if="scope.row.edit">
                 <el-button type="success" size="mini" @click="cfmPatScope(scope.row)">
-                  <span>确认</span>
+                  <span>保存</span>
                 </el-button>
                 <el-button type="primary" size="mini" @click="cancelScope(scope.row, scope.$index)">
                   <span>取消</span>
@@ -245,7 +245,7 @@ export default {
         text: null,
         url: null
       },
-      inserting: false,
+      disabledBtn: false,
       searchForm: {
         date: "",
         region: ""
@@ -315,22 +315,86 @@ export default {
         this.isFormAlive = true
       })
     },
-
-    onShow() {
-      this.isInit = false
-      this.searchForm = {
-        locId: this.form.region[this.form.region.length - 1],
-        date: new Date(this.form.date1).Format("yyyy-MM-dd")
-      };
-      this.getData(this.searchForm)
+    // 注：仅用于判断输入值是否符合
+    isEmpty(value) {
+      if (!value && value !== 0) { // value == 0 也不是 empty
+        return true;
+      } else {
+        return false;
+      }
     },
+    clearData() {
+      this.form = {
+        region: this.form.region,
+        date1: this.form.date1,
+        number1: null, // 确诊
+        number2: null, // 康复
+        number3: null, // 死亡
+        text: null,
+        url: null
+      },
+      this.formPat.patData = [];
+      this.searchForm = {}
+    },
+    getData(params) {
+      this.getForm(params)
+      this.getPat(params)
+    },
+    getForm(params) {
+      getCount(params).then(res => {
+        if (res.status === 0) {
+          var data = res.Counts
+          this.form.id = data.id
+          this.form.number1 = data.countConfirm
+          this.form.number2 = data.countRecover
+          this.form.number3 = data.countDead
+          this.form.text = data.countSourceText
+          this.form.url = data.countSourceUrl
+          this.hasData = true
+          this.isInit = false
+        } else {
+          this.$message(res.desc);
+        }
+      })
+      .catch(() => {
+        this.clearData()
+      })
+      .finally(() => {
+        this.disabledBtn = false;
+      });
+    },
+    getPat(params) {
+      if(!this.searchForm.date || !this.searchForm.locId) {
+        this.$message("请填入时间和地区")
+      } else {
+        getCase(params).then(res => {
+          if(res.status === 0) {
+            this.formPat.patData = res.Patients
+            this.formPat.patData.forEach((item, index) => {
+              item.edit = false
+            })
+          } else {
+            this.$message(res.desc);
+          }
+        })
+      }
+    },
+    // onShow() {
+    //   this.isInit = false
+    //   this.searchForm = {
+    //     locId: this.form.region[this.form.region.length - 1],
+    //     date: new Date(this.form.date1).Format("yyyy-MM-dd")
+    //   };
+    //   this.getData(this.searchForm)
+    // },
     onReturn() {
       this.clearData()
       this.isInit = true
       this.hasData = false
     },
     onSubmit() {
-      this.inserting = true;
+      this.disabledBtn = true;
+      var isEmpty = this.isEmpty;
       var params_count = {
         countRegionId: this.form.region[this.form.region.length - 1],
         countDate: new Date(this.form.date1).Format("yyyy-MM-dd"),
@@ -340,40 +404,54 @@ export default {
         countSourceUrl: this.form.url,
         countSourceText: this.form.text,
       };
-      var isEmpty = this.isEmpty;
       this.$refs["form"].validate(valid => {
         if (valid) {
-          if (isEmpty(params_count.countConfirm) ||
-            isEmpty(params_count.countRecover) ||
-            isEmpty(params_count.countDead) ||
-            isEmpty(params_count.countSourceText) ||
+          // 如果都为空，执行查询操作；如果有一项不为空，执行提交操作
+          if (isEmpty(params_count.countConfirm) &&
+            isEmpty(params_count.countRecover) &&
+            isEmpty(params_count.countDead) &&
+            isEmpty(params_count.countSourceText) &&
             isEmpty(params_count.countSourceUrl)
           ) {
-            this.$message("请填写完整，或输入有效数据")
-            this.inserting = false;
-            return false
+            this.searchForm = {
+              locId: this.form.region[this.form.region.length - 1],
+              date: new Date(this.form.date1).Format("yyyy-MM-dd")
+            };
+            this.getData(this.searchForm)
+          } else {
+            // 检查输入数据是否都有效
+            if (isEmpty(params_count.countConfirm) ||
+              isEmpty(params_count.countRecover) ||
+              isEmpty(params_count.countDead) ||
+              isEmpty(params_count.countSourceText) ||
+              isEmpty(params_count.countSourceUrl)
+            ) {
+              this.$message("请填写完整，或输入有效数据")
+              this.disabledBtn = false;
+              return false
+            }
+            insertCount(params_count)
+              .then(res => {
+                if(res.status === 0) {
+                  this.$message("提交成功");
+                  this.onReturn()
+                } else {
+                  this.$message(res.desc)
+                }
+              })
+              .finally(() => {
+                this.disabledBtn = false;
+              });
           }
-          //只更新count
-          insertCount(params_count)
-            .then(res => {
-              if(res.status === 0) {
-                // this.$message("提交成功");
-                this.onReturn()
-              } else {
-                this.$message(res.desc)
-              }
-            })
-            .finally(() => {
-              this.inserting = false;
-            });
         } else {
-          this.inserting = false;
+          this.disabledBtn = false;
         }
       });
     },
-    onModify() { // todo 测试
+    onModify() { 
       this.$confirm("确认修改？")
         .then(() => {
+          this.disabledBtn = true;
           var param = {
             id: this.form.id,
             countRegionId: this.form.region[this.form.region.length - 1],
@@ -392,21 +470,26 @@ export default {
             isEmpty(param.countSourceUrl)
           ) {
             this.$message("请填写完整，或输入有效数据")
+            this.disabledBtn = false;
             return false
           }
           modifyCount(param).then(res => {
-            if(res.data.status == 0) {
-              // this.$message("修改成功")
+            if(res.status == 0) {
+              this.$message("修改成功")
               this.onReturn()
             } else {
               this.$message(res.desc)
             }
           })
+          .finally(() => {
+            this.disabledBtn = false;
+          });
         })
     }, 
-    onDelete() { // todo 测试
+    onDelete() { 
       this.$confirm("将同时删除所有病例，确认删除？") // 确认删除该信息及所有病例
         .then(() => {
+          this.disabledBtn = true;
           deleteCount(this.form.id).then((res) => {
             if(res.status == 0) {
               this.$message("删除成功")
@@ -415,6 +498,9 @@ export default {
               this.$message(res.desc)
             }
           })
+          .finally(() => {
+            this.disabledBtn = false;
+          });
         }).catch(() => {});
     },
 
@@ -441,6 +527,10 @@ export default {
         this.$message("请填写完整，或输入有效数据")
         return false
       }
+      if(!this.searchForm.date || !this.searchForm.locId) {
+        this.$message("请填入时间和地区")
+        return false
+      }
       var pat = {
         sampleRegionId: this.form.region[
           this.form.region.length - 1
@@ -459,7 +549,7 @@ export default {
       if(!row.id) {
         insertCases([pat]).then((res) => {
           if(res.status === 0) {
-            // this.$message("添加成功");
+            this.$message("保存成功");
             row.edit = false;
             this.getPat(this.searchForm)
             this.reload() 
@@ -469,9 +559,9 @@ export default {
         })
       } else {
         pat.id = row.id
-        modifyCase(pat).then((res) => { // todo 测试
+        modifyCase(pat).then((res) => { 
           if(res.status === 0) {
-            // this.$message("修改成功");
+            this.$message("修改成功");
             row.edit = false;
             this.getPat(this.searchForm)
             this.reload()
@@ -510,53 +600,6 @@ export default {
         }).catch(() => {});
     },
 
-    clearData() {
-      this.form = {
-        region: this.form.region,
-        date1: this.form.date1,
-        number1: null, // 确诊
-        number2: null, // 康复
-        number3: null, // 死亡
-        text: null,
-        url: null
-      },
-      this.formPat.patData = [];
-      this.searchForm = {}
-    },
-
-    getData(params) {
-      this.getForm(params)
-      this.getPat(params)
-    },
-    getForm(params) {
-      getCount(params).then(res => {
-        if (res.status === 0) {
-          var data = res.Counts
-          this.form.id = data.id
-          this.form.number1 = data.countConfirm
-          this.form.number2 = data.countRecover
-          this.form.number3 = data.countDead
-          this.form.text = data.countSourceText
-          this.form.url = data.countSourceUrl
-          this.hasData = true
-        } else {
-          this.$message(res.desc);
-        }
-      })
-    },
-    getPat(params) {
-      getCase(params).then(res => {
-        if(res.status === 0) {
-          this.formPat.patData = res.Patients
-          this.formPat.patData.forEach((item, index) => {
-            item.edit = false
-          })
-        } else {
-          this.$message(res.desc);
-        }
-      })
-    },
-
     logout() {
       // eslint-disable-next-line no-useless-escape
       var keys = document.cookie.match(/[^ =;]+(?=\=)/g);
@@ -568,21 +611,17 @@ export default {
 
       this.$router.push({ name: "login" });
     },
-    // 注：仅用于判断输入值是否符合
-    isEmpty(value) {
-      if (!value && Number(value) !== 0) { // value == 0 也不是 empty
-        return true;
-      } else {
-        return false;
-      }
-    },
   },
   watch: {
-    // form: {
-    //   handler: function() {
-    //   },
-    //   deep: true
-    // }
+    form: {
+      handler: function() {
+        this.searchForm = {
+          locId: this.form.region[this.form.region.length - 1],
+          date: new Date(this.form.date1).Format("yyyy-MM-dd")
+        };
+      },
+      deep: true
+    }
   },
   mounted() {
     (function() {
