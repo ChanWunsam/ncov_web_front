@@ -9,7 +9,7 @@ function erroeMsg(error) {
   Message({
     message: error,
     type: 'error',
-    duration: 3 * 1000
+    duration: 3 * 500
   })
 }
 
@@ -17,7 +17,7 @@ function Msg(error) {
   Message({
     message: error,
     // type: 'error',
-    duration: 3 * 1000
+    duration: 3 * 500
   })
 }
 
