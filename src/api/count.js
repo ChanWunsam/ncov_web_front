@@ -37,10 +37,9 @@ function getCount(params) {
     })
   })
 }
-
 function getCase(params) {
   
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     request.post("/api/info/getPat", qs.stringify(params)).then(res => {
       if (res.data.status == 0) {
         resolve(res.data)
@@ -48,10 +47,10 @@ function getCase(params) {
         Msg(res.data.desc)
         reject(res.data)
       }
+    }).catch(err => {
+      erroeMsg(err)
+      reject(err)
     })
-  }).catch(err => {
-    erroeMsg(err)
-    reject(err)
   })
 }
 

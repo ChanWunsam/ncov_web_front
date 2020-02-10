@@ -78,19 +78,19 @@
         @click="onSubmit"
         style="margin-top: 12px; "
         :disabled="inserting"
-      >提交</el-button>
+      >提交后返回</el-button>
       <el-button
         v-show="!isInit&&hasData"
         type="warning"
         @click="onModify"
         style="margin-top: 12px; "
-      >{{ inserting == true ? "修改中" : "修改" }}</el-button>
+      >{{ inserting == true ? "修改中" : "修改后返回" }}</el-button>
       <el-button
         v-show="!isInit&&hasData"
         type="danger"
         @click="onDelete"
         style="margin-top: 12px; "
-      > 删除 </el-button>
+      > 删除后返回 </el-button>
       <el-button
         v-show="!isInit"
         type="default"
@@ -340,7 +340,6 @@ export default {
         countDead: this.form.number3,
         countSourceUrl: this.form.url,
         countSourceText: this.form.text,
-        countUserId: this.regionId
       };
       var isEmpty = this.isEmpty;
       this.$refs["form"].validate(valid => {
@@ -359,8 +358,8 @@ export default {
           insertCount(params_count)
             .then(res => {
               if(res.status === 0) {
-                this.$message("插入成功");
-                this.hasData = true
+                // this.$message("提交成功");
+                this.onReturn()
               } else {
                 this.$message(res.desc)
               }
@@ -385,7 +384,6 @@ export default {
             countDead: this.form.number3,
             countSourceUrl: this.form.url,
             countSourceText: this.form.text,
-            countUserId: this.regionId
           };
           var isEmpty = this.isEmpty
           if (isEmpty(param.countConfirm) ||
@@ -399,7 +397,8 @@ export default {
           }
           modifyCount(param).then(res => {
             if(res.data.status == 0) {
-              this.$message("修改成功")
+              // this.$message("修改成功")
+              this.onReturn()
             } else {
               this.$message(res.desc)
             }
@@ -407,11 +406,10 @@ export default {
         })
     }, 
     onDelete() { // todo 测试
-      this.$confirm("确认删除？") // 确认删除该信息及所有病例
+      this.$confirm("将同时删除所有病例，确认删除？") // 确认删除该信息及所有病例
         .then(() => {
           deleteCount(this.form.id).then((res) => {
             if(res.status == 0) {
-              // todo 要确认这里是否也删除了病例
               this.$message("删除成功")
               this.onReturn()
             } else {
@@ -457,13 +455,12 @@ export default {
           "yyyy-MM-dd"
         ),
         sampleSourceUrl: row.sampleSourceUrl,
-        sampleSourceText: row.sampleSourceText,
-        sampleUserId: this.regionId
+        sampleSourceText: row.sampleSourceText
       }
       if(!row.id) {
         insertCases([pat]).then((res) => {
           if(res.status === 0) {
-            this.$message("添加成功");
+            // this.$message("添加成功");
             row.edit = false;
             this.getPat(this.searchForm)
             this.reload() 
@@ -473,11 +470,11 @@ export default {
         })
       } else {
         pat.id = row.id
-        // todo 这里可以用数组吗？？？
         modifyCase(pat).then((res) => { // todo 测试
           if(res.status === 0) {
-            this.$message("修改成功");
+            // this.$message("修改成功");
             row.edit = false;
+            this.getPat(this.searchForm)
             this.reload()
           } else {
             this.$message(res.desc)
@@ -490,6 +487,7 @@ export default {
         this.formPat.patData.splice(index, 1);
       } else {
         row.edit = false
+        this.getPat(this.searchForm)
         this.reload()
       }
     },
@@ -504,7 +502,10 @@ export default {
         .then(() => {
           deleteCase(row.id).then((res) => {
             if(res.status == 0) {
-              this.formPat.patData.splice(index, 1);
+              this.$message("删除成功");
+              this.getPat(this.searchForm)
+            } else {
+              this.$message(res.desc)
             }
           })
         }).catch(() => {});
@@ -512,8 +513,8 @@ export default {
 
     clearData() {
       this.form = {
-        region: "",
-        date1: "",
+        region: this.form.region,
+        date1: this.form.date1,
         number1: null, // 确诊
         number2: null, // 康复
         number3: null, // 死亡
