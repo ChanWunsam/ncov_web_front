@@ -277,7 +277,6 @@ export default {
       hasDetailCase: false,
       isInit: true, // 页面初始化时，只显示地区、时间两个框和确认按钮（只有页面初始化时才可修改地区、时间）
       hasData: false, // 点击确认按钮后，是否有疫情数据，无的话显示提交按钮，反之则无
-      firstInit: true, // 数据是否刚初始化成功（用于辅助显示修改按钮）
       props: {
         lazy: true,
         checkStrictly: true,

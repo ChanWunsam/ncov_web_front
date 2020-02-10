@@ -77,6 +77,7 @@ function insertCount(params) {
 function insertCases(params) {
 
   return new Promise(function (resolve, reject) {
+    // 这里不返回stringify
     request.post("/api/sample/insert", params).then(res => {
       if (res.data.status == 0) {
         resolve(res.data)
@@ -94,7 +95,7 @@ function insertCases(params) {
 function modifyCount(param) {
 
   return new Promise(function (resolve, reject) {
-    request.post("/api/count/update", param).then(res => {
+    request.post("/api/count/update", qs.stringify(param)).then(res => {
       if (res.data.status == 0) {
         resolve(res.data)
       } else {
@@ -111,8 +112,8 @@ function modifyCount(param) {
 
 function modifyCase(param) {
 
-  return new Promise(
-    request.post("/api/sample/update", param).then(res => {
+  return new Promise(function (resolve, reject) {
+    request.post("/api/sample/update", qs.stringify(param)).then(res => {
       if (res.data.status == 0) {
         resolve(res.data)
       } else {
@@ -123,7 +124,7 @@ function modifyCase(param) {
       erroeMsg(err)
       reject(err)
     })
-  )
+  })
 }
 
 function deleteCase(id) {
