@@ -78,13 +78,13 @@
         @click="onSubmit"
         style="margin-top: 12px; "
         :disabled="inserting"
-      >{{ inserting == true ? "提交中" : "提交" }}</el-button>
+      >提交</el-button>
       <el-button
         v-show="!isInit&&hasData"
         type="warning"
         @click="onModify"
         style="margin-top: 12px; "
-      > 修改 </el-button>
+      >{{ inserting == true ? "修改中" : "修改" }}</el-button>
       <el-button
         v-show="!isInit&&hasData"
         type="danger"
@@ -149,7 +149,7 @@
               <el-form-item v-if="scope.row.edit" 
                 :prop="'patData.' + scope.$index + '.sampleSourceText'"
               >
-                <el-input v-model="scope.row.sampleSourceText" placeholder=""></el-input>
+                <el-input type="textarea" v-model="scope.row.sampleSourceText" placeholder=""></el-input>
               </el-form-item>
               <span v-else>{{scope.row.sampleSourceText}}</span>
             </template>
@@ -162,7 +162,7 @@
               <el-form-item v-if="scope.row.edit" 
                 :prop="'patData.' + scope.$index + '.sampleSourceUrl'"
               >
-                <el-input v-model="scope.row.sampleSourceUrl" placeholder=""></el-input>
+                <el-input type="textarea" v-model="scope.row.sampleSourceUrl" placeholder=""></el-input>
               </el-form-item>
               <span v-else>{{scope.row.sampleSourceUrl}}</span>
             </template>
@@ -387,6 +387,16 @@ export default {
             countSourceText: this.form.text,
             countUserId: this.regionId
           };
+          var isEmpty = this.isEmpty
+          if (isEmpty(param.countConfirm) ||
+            isEmpty(param.countRecover) ||
+            isEmpty(param.countDead) ||
+            isEmpty(param.countSourceText) ||
+            isEmpty(param.countSourceUrl)
+          ) {
+            this.$message("请填写完整，或输入有效数据")
+            return false
+          }
           modifyCount(param).then(res => {
             if(res.data.status == 0) {
               this.$message("修改成功")
@@ -522,6 +532,7 @@ export default {
       getCount(params).then(res => {
         if (res.status === 0) {
           var data = res.Counts
+          this.form.id = data.id
           this.form.number1 = data.countConfirm
           this.form.number2 = data.countRecover
           this.form.number3 = data.countDead
