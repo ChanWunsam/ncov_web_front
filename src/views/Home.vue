@@ -44,7 +44,7 @@
                 >
                 </el-date-picker>
               </el-form-item>
-              <el-form-item label="新增确诊" prop="number1">
+              <!-- <el-form-item label="新增确诊" prop="number1">
                 <el-input v-model="form.number1"></el-input>
               </el-form-item>
               <el-form-item label="新增康复" prop="number2">
@@ -58,7 +58,7 @@
               </el-form-item>
               <el-form-item label="源url" prop="url">
                 <el-input type="textarea" v-model="form.url"></el-input>
-              </el-form-item>
+              </el-form-item> -->
             </el-form>
           </el-main>
         </el-container>
@@ -67,41 +67,145 @@
 
     <el-footer style="margin-bottom: 30px">
       <!-- 按钮组合 -->
-      <!-- <el-button
-        v-show="isInit"
-        type="primary"
-        @click="onShow"
-        style="margin-top: 12px; "
-      > 确认 </el-button> -->
       <el-button
+        type="primary"
+        @click="onSearch"
+        style="margin-top: 12px; "
+      > 查询 </el-button>
+      <!-- <el-button
         v-show="!hasData"
         type="primary"
         @click="onSubmit"
         style="margin-top: 12px; "
         :disabled="disabledBtn"
-      >查询/提交</el-button>
-      <el-button
+      >查询/提交</el-button> -->
+      <!-- <el-button
         v-show="hasData"
         type="warning"
         @click="onModify"
         style="margin-top: 12px; "
         :disabled="disabledBtn"
-      >修改</el-button>
-      <el-button
+      >修改</el-button> -->
+      <!-- <el-button
         v-show="hasData"
         type="danger"
         @click="onDelete"
         style="margin-top: 12px; "
         :disabled="disabledBtn"
-      >删除</el-button>
+      >删除</el-button> -->
       <el-button
-        v-show="!isInit"
         type="default"
         @click="onReturn"
         style="margin-top: 12px; "
-      >取消</el-button>
+      > 清空 </el-button>
     </el-footer>
+    
+    <p 
+      class="title" 
+      style="border-bottom: 1px solid #eee; marigin: 10px 0px;"
+    >统计信息</p>
 
+    <div style="padding:0px 40px;" id="nowData">
+      <el-form
+        :ref="form"
+        :model="form"
+        v-if="isFormAlive"
+        label-width="90px"
+      >
+        <el-table 
+          :data="form.countData"
+          style="width:100%"
+        >
+          <el-table-column property="locName" label="地区" width="150">
+            <template slot-scope="scope">
+              <span v-if="scope.row.edit">
+                {{ scope.row.locName ? scope.row.locName : regionName }}
+              </span>
+              <span v-else>{{scope.row.locName}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column property="countConfirm" label="新增确诊" width="100">
+            <template slot-scope="scope">
+              <el-form-item v-if="scope.row.edit" 
+                :prop="'countData.' + scope.$index + '.countConfirm'"
+              >
+                <el-input v-model="scope.row.countConfirm" placeholder=""></el-input>
+              </el-form-item>
+              <span v-else>{{scope.row.countConfirm}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column property="countRecover" label="新增康复" width="100">
+            <template slot-scope="scope">
+              <el-form-item v-if="scope.row.edit" 
+                :prop="'countData.' + scope.$index + '.countRecover'"
+              >
+                <el-input v-model="scope.row.countRecover" placeholder=""></el-input>
+              </el-form-item>
+              <span v-else>{{scope.row.countRecover}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column property="countDead" label="新增死亡" width="100">
+            <template slot-scope="scope">
+              <el-form-item v-if="scope.row.edit" 
+                :prop="'countData.' + scope.$index + '.countDead'"
+              >
+                <el-input v-model="scope.row.countDead" placeholder=""></el-input>
+              </el-form-item>
+              <span v-else>{{scope.row.countDead}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            property="countSourceText"
+            label="源数据"
+          >
+            <template slot-scope="scope">
+              <el-form-item v-if="scope.row.edit" 
+                :prop="'countData.' + scope.$index + '.countSourceText'"
+              >
+                <el-input type="textarea" v-model="scope.row.countSourceText" placeholder=""></el-input>
+              </el-form-item>
+              <span v-else>{{scope.row.countSourceText}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            property="countSourceUrl"
+            label="源url"
+          >
+            <template slot-scope="scope">
+              <el-form-item v-if="scope.row.edit" 
+                :prop="'countData.' + scope.$index + '.countSourceUrl'"
+              >
+                <el-input type="textarea" v-model="scope.row.countSourceUrl" placeholder=""></el-input>
+              </el-form-item>
+              <span v-else>{{scope.row.countSourceUrl}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="150">
+            <template slot-scope="scope">
+              <div v-if="scope.row.edit">
+                <el-button type="success" size="mini" @click="onSaveCount(scope.row)">
+                  <span>保存</span>
+                </el-button>
+                <el-button type="primary" size="mini" @click="onCancelCount(scope.row, scope.$index)">
+                  <span>取消</span>
+                </el-button>
+              </div>
+              <div v-else>
+                <el-button type="primary" size="mini" @click="onEditCount(scope.row)">
+                  <span>编辑</span>
+                </el-button>
+                <el-button type="danger" size="mini" @click="onDelCount(scope.row, scope.$index)">
+                  <span>删除</span>
+                </el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table> 
+      </el-form>
+    </div>
+    <el-button type="primary" @click="onAddCount" style="margin-top: 30px">添加统计</el-button> 
+    <!-- <el-button type="success" @click="onSaveAllCounts" style="margin-top: 30px">保存所有统计</el-button> -->
+    
     <p 
       class="title" 
       style="border-bottom: 1px solid #eee; marigin: 10px 0px;"
@@ -201,7 +305,7 @@
       </el-form>
     </div>
     <el-button type="primary" @click="onAddPat" style="margin-top: 30px">添加病例</el-button> 
-    <el-button type="success" @click="onSaveAllPat" style="margin-top: 30px">保存所有</el-button>
+    <el-button type="success" @click="onSaveAllPats" style="margin-top: 30px">保存所有病例</el-button>
   </div>
 </template>
 
@@ -245,7 +349,8 @@ export default {
       isFormAlive: true,
       disabledBtn: false,
       readValue: "", // 用于解决selcet框回显value的bug
-
+      closeMsg: false, // 用于关掉删除统计信息后的无查询结果
+      // todo isInit没有使用，但暂时不删掉
       isInit: true, // 页面初始化时，只显示地区、时间两个框和确认按钮（只有页面初始化时才可修改地区、时间）
       hasData: false, // 点击确认按钮后，是否有疫情数据，无的话显示提交按钮，反之则无
 
@@ -254,11 +359,15 @@ export default {
       form: {
         region: "",
         date: "",
-        number1: null, // 确诊
-        number2: null, // 康复
-        number3: null, // 死亡
-        text: null,
-        url: null
+        // 当前region所管辖的所有区域
+        countData: []
+        // {
+        //   countConfirm
+        //   countRecover
+        //   countDead
+        //   countSourceText
+        //   countSourceUrl
+        // }
       },
       searchForm: {
         date: "",
@@ -337,37 +446,43 @@ export default {
       this.form = {
         region: this.form.region,
         date: this.form.date,
-        number1: null, // 确诊
-        number2: null, // 康复
-        number3: null, // 死亡
-        text: null,
-        url: null
+        countData: []
+        // number1: null, // 确诊
+        // number2: null, // 康复
+        // number3: null, // 死亡
+        // text: null,
+        // url: null
       },
       this.formPat.patData = [];
       this.searchForm = {}
     },
     getData(params) {
-      this.getForm(params)
+      this.getCount(params)
       this.getPat(params)
     },
-    getForm(params) {
+    getCount(params) {
       getCount(params).then(res => {
         if (res.status === 0) {
-          var data = res.Counts
-          this.form.id = data.id
-          this.form.number1 = data.countConfirm
-          this.form.number2 = data.countRecover
-          this.form.number3 = data.countDead
-          this.form.text = data.countSourceText
-          this.form.url = data.countSourceUrl
-          this.hasData = true
-          this.isInit = false
+          this.form.countData = Array.isArray(res.Counts) ? 
+                                res.Counts : [res.Counts]
+          this.form.countData.forEach((item, index) => {
+            item.edit = false
+          })
+          // this.hasData = true
+          // this.isInit = false
         } else {
           this.$message.error(res.desc);
         }
       })
-      .catch(() => {
+      .catch((res) => {
         this.clearData()
+        if (res.status === 602) {
+          if(!this.closeMsg) {
+            this.$message.error(res.desc);
+          } else {
+            this.closeMsg = false
+          }
+        }
       })
       .finally(() => {
         this.disabledBtn = false;
@@ -385,123 +500,223 @@ export default {
         }
       })
     },
-    // onShow() {
-    //   this.isInit = false
-    //   this.searchForm = {
-    //     locId: this.form.region[this.form.region.length - 1],
-    //     date: new Date(this.form.date).Format("yyyy-MM-dd")
-    //   };
-    //   this.getData(this.searchForm)
-    // },
+    onSearch() {
+      // this.isInit = false
+      this.searchForm = {
+        locId: this.form.region[this.form.region.length - 1],
+        date: new Date(this.form.date).Format("yyyy-MM-dd")
+      };
+      if(this.checkDateRegion(this.searchForm)) {
+        this.getData(this.searchForm)
+      }
+    },
     onReturn() {
       this.clearData()
-      this.isInit = true
-      this.hasData = false
+      // this.isInit = true
+      // this.hasData = false
     },
     onSubmit() {
-      if(!this.searchForm.date || !this.searchForm.locId) {
-        this.$message.warning("请填入时间和地区")
-        return false
-      }
-      this.disabledBtn = true;
-      var isEmpty = this.isEmpty;
-      var params_count = {
-        countRegionId: this.form.region[this.form.region.length - 1],
-        countDate: new Date(this.form.date).Format("yyyy-MM-dd"),
-        countConfirm: this.form.number1,
-        countRecover: this.form.number2,
-        countDead: this.form.number3,
-        countSourceUrl: this.form.url,
-        countSourceText: this.form.text,
-      };
-      this.$refs["form"].validate(valid => {
-        if (valid) {
-          // 如果都为空，执行查询操作；如果有一项不为空，执行提交操作
-          if (isEmpty(params_count.countConfirm) &&
-            isEmpty(params_count.countRecover) &&
-            isEmpty(params_count.countDead) &&
-            isEmpty(params_count.countSourceText) &&
-            isEmpty(params_count.countSourceUrl)
-          ) {
-            if(!this.checkDateRegion(this.searchForm)) {
-              this.disabledBtn = false;
-              return false
-            }
-            this.searchForm = {
-              locId: this.form.region[this.form.region.length - 1],
-              date: new Date(this.form.date).Format("yyyy-MM-dd")
-            };
-            this.getData(this.searchForm)
-          } else {
-            // 检查输入数据是否都有效
-            if(!this.checkDateRegion(this.searchForm) || !this.checkCount(params_count)) {
-              this.disabledBtn = false;
-              return false
-            }
-            insertCount(params_count)
-              .then(res => {
-                if(res.status === 0) {
-                  this.$message.success("提交成功");
-                  this.onReturn()
-                } else {
-                  this.$message.error(res.desc)
-                }
-              })
-              .finally(() => {
-                this.disabledBtn = false;
-              });
-          }
-        } else {
-          this.disabledBtn = false;
-        }
-      });
+      // if(!this.searchForm.date || !this.searchForm.locId) {
+      //   this.$message.warning("请填入时间和地区")
+      //   return false
+      // }
+      // this.disabledBtn = true;
+      // var isEmpty = this.isEmpty;
+      // var params_count = {
+      //   countRegionId: this.form.region[this.form.region.length - 1],
+      //   countDate: new Date(this.form.date).Format("yyyy-MM-dd"),
+      //   countConfirm: this.form.countData.countConfirm,
+      //   countRecover: this.form.countData.countRecover,
+      //   countDead: this.form.countData.countDead,
+      //   countSourceUrl: this.form.countData.countSourceUrl,
+      //   countSourceText: this.form.countData.countSourceText,
+      // };
+      // this.$refs["form"].validate(valid => {
+      //   if (valid) {
+      //     // 如果都为空，执行查询操作；如果有一项不为空，执行提交操作
+      //     if (isEmpty(params_count.countConfirm) &&
+      //       isEmpty(params_count.countRecover) &&
+      //       isEmpty(params_count.countDead) &&
+      //       isEmpty(params_count.countSourceText) &&
+      //       isEmpty(params_count.countSourceUrl)
+      //     ) {
+      //       if(!this.checkDateRegion(this.searchForm)) {
+      //         this.disabledBtn = false;
+      //         return false
+      //       }
+      //       this.searchForm = {
+      //         locId: this.form.region[this.form.region.length - 1],
+      //         date: new Date(this.form.date).Format("yyyy-MM-dd")
+      //       };
+      //       this.getData(this.searchForm)
+      //     } else {
+      //       // 检查输入数据是否都有效
+      //       if(!this.checkDateRegion(this.searchForm) || !this.checkCount(params_count)) {
+      //         this.disabledBtn = false;
+      //         return false
+      //       }
+      //       insertCount(params_count)
+      //         .then(res => {
+      //           if(res.status === 0) {
+      //             this.$message.success("提交成功");
+      //             this.onReturn()
+      //           } else {
+      //             this.$message.error(res.desc)
+      //           }
+      //         })
+      //         .finally(() => {
+      //           this.disabledBtn = false;
+      //         });
+      //     }
+      //   } else {
+      //     this.disabledBtn = false;
+      //   }
+      // });
     },
     onModify() { 
-      this.$confirm("确认修改？")
-        .then(() => {
-          this.disabledBtn = true;
-          var param = {
-            id: this.form.id,
-            countRegionId: this.form.region[this.form.region.length - 1],
-            countDate: new Date(this.form.date).Format("yyyy-MM-dd"),
-            countConfirm: this.form.number1,
-            countRecover: this.form.number2,
-            countDead: this.form.number3,
-            countSourceUrl: this.form.url,
-            countSourceText: this.form.text,
-          };
-          if(!this.checkDateRegion(this.searchForm) || !this.checkCount(param)) {
-            this.disabledBtn = false;
-            return false
-          }
-          modifyCount(param).then(res => {
-            if(res.status == 0) {
-              this.$message.success("修改成功")
-              this.onReturn()
-            } else {
-              this.$message.error(res.desc)
-            }
-          })
-          .finally(() => {
-            this.disabledBtn = false;
-          });
-        })
+      // this.$confirm("确认修改？")
+      //   .then(() => {
+      //     this.disabledBtn = true;
+      //     var param = {
+      //       id: this.form.id,
+      //       countRegionId: this.form.region[this.form.region.length - 1],
+      //       countDate: new Date(this.form.date).Format("yyyy-MM-dd"),
+      //       countConfirm: this.form.countData.countConfirm,
+      //       countRecover: this.form.countData.countRecover,
+      //       countDead: this.form.countData.countDead,
+      //       countSourceUrl: this.form.countData.countSourceUrl,
+      //       countSourceText: this.form.countData.countSourceText,
+      //     };
+      //     if(!this.checkDateRegion(this.searchForm) || !this.checkCount(param)) {
+      //       this.disabledBtn = false;
+      //       return false
+      //     }
+      //     modifyCount(param).then(res => {
+      //       if(res.status == 0) {
+      //         this.$message.success("修改成功")
+      //         this.onReturn()
+      //       } else {
+      //         this.$message.error(res.desc)
+      //       }
+      //     })
+      //     .finally(() => {
+      //       this.disabledBtn = false;
+      //     });
+      //   })
     }, 
     onDelete() { 
-      this.$confirm("将同时删除所有病例，确认删除？") // 确认删除该信息及所有病例
+      // this.$confirm("将同时删除所有病例，确认删除？") // 确认删除该信息及所有病例
+      //   .then(() => {
+      //     this.disabledBtn = true;
+      //     deleteCount(this.form.id).then((res) => {
+      //       if(res.status == 0) {
+      //         this.$message.success("删除成功")
+      //         this.onReturn()
+      //       } else {
+      //         this.$message.error(res.desc)
+      //       }
+      //     })
+      //     .finally(() => {
+      //       this.disabledBtn = false;
+      //     });
+      //   }).catch(() => {});
+    },
+
+    onAddCount() {
+      if(this.form.countData.length < 1) { // todo 后期删除 
+        this.form.countData.push({
+          edit: true,
+          id: "",
+          countConfirm: "",
+          countRecover: "",
+          countDead: "",
+          countSourceText: "",
+          countSourceUrl: "",
+          locName: ""
+        })
+      } else {
+        this.$message.warning("目前只能添加一条统计信息")
+      }
+    },
+    onEditCount(row) {
+      row.edit = true
+      this.reload(this.isFormAlive)
+    },
+    onCancelCount(row, index) {
+      if(!row.id) {
+        this.form.countData.splice(index, 1);
+      } else {
+        row.edit = false
+        this.getCount(this.searchForm)
+        this.reload(this.isFormAlive)
+      }
+    },
+    onSaveCount(row) {
+      if(!this.checkDateRegion(this.searchForm) || !this.checkCount(row)) {
+        return false
+      }
+      var count = {
+        countRegionId: this.form.region[this.form.region.length - 1],
+        countDate: new Date(this.form.date).Format("yyyy-MM-dd"),
+        countConfirm: row.countConfirm,
+        countRecover: row.countRecover,
+        countDead: row.countDead,
+        countSourceUrl: row.countSourceUrl,
+        countSourceText: row.countSourceText,
+      };
+      if(!row.id) {
+        insertCount(count).then(res => {
+          if(res.status === 0) {
+            this.$message.success("保存统计成功");
+            row.edit = false;
+            this.getCount(this.searchForm)
+            this.reload(this.isFormAlive) 
+          } else {
+            this.$message.error(res.desc)
+          }
+        })
+      } else {
+        count.id = row.id
+        modifyCount(count).then(res => {
+          if(res.status === 0) {
+            this.$message.success("修改统计成功");
+            row.edit = false;
+            this.getCount(this.searchForm)
+            this.reload(this.isFormAlive)
+          } else {
+            this.$message.error(res.desc)
+          }
+        })
+      }
+    },
+    onSaveAllCounts() {
+      if(this.checkDateRegion(this.searchForm)) {
+        var valid = true
+        this.formPat.patData.forEach((item, index) => {
+          if(!this.checkCount(item)) {
+            valid = false
+          }
+        })
+        if(valid) {
+          // 先检查所有的填空是否有效，再逐个保存
+          this.form.patCount.forEach((item, index) => {
+            this.onSaveCount(item)
+          })
+        }
+      }
+    },
+    onDelCount(row, index) {
+      this.$confirm("将同时删除所有病例，确认删除统计？")
         .then(() => {
-          this.disabledBtn = true;
-          deleteCount(this.form.id).then((res) => {
+          deleteCount(row.id).then((res) => {
             if(res.status == 0) {
-              this.$message.success("删除成功")
-              this.onReturn()
+              this.$message.success("删除统计成功");
+              this.closeMsg = true
+              this.getCount(this.searchForm)
             } else {
               this.$message.error(res.desc)
             }
           })
-          .finally(() => {
-            this.disabledBtn = false;
-          });
         }).catch(() => {});
     },
 
@@ -540,7 +755,7 @@ export default {
       if(!row.id) {
         insertCases([pat]).then((res) => {
           if(res.status === 0) {
-            this.$message.success("保存成功");
+            this.$message.success("保存病例成功");
             row.edit = false;
             this.getPat(this.searchForm)
             this.reload(this.isFormPatAlive) 
@@ -552,7 +767,7 @@ export default {
         pat.id = row.id
         modifyCase(pat).then((res) => { 
           if(res.status === 0) {
-            this.$message.success("修改成功");
+            this.$message.success("修改病例成功");
             row.edit = false;
             this.getPat(this.searchForm)
             this.reload(this.isFormPatAlive)
@@ -578,11 +793,11 @@ export default {
       this.reload(this.isFormPatAlive)
     },
     onDelPat(row, index) {
-      this.$confirm("确认删除？")
+      this.$confirm("确认删除病例？")
         .then(() => {
           deleteCase(row.id).then((res) => {
             if(res.status == 0) {
-              this.$message.success("删除成功");
+              this.$message.success("删除病例成功");
               this.getPat(this.searchForm)
             } else {
               this.$message.error(res.desc)
@@ -590,7 +805,7 @@ export default {
           })
         }).catch(() => {});
     },
-    onSaveAllPat() {
+    onSaveAllPats() {
       if(this.checkDateRegion(this.searchForm)) {
         var valid = true
         this.formPat.patData.forEach((item, index) => {

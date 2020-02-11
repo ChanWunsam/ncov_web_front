@@ -38,10 +38,26 @@ function promisePost(url, params) {
 }
 
 function getCount(params) {
-  return promisePost(
-    "/api/info/getCount", 
-    qs.stringify(params)
-  );
+  return new Promise(function (resolve, reject) {
+    request.post(
+      "/api/info/getCount", 
+      qs.stringify(params)
+    ).then(res => {
+      if (res.data.status == 0) {
+        resolve(res.data)
+      } 
+      else if(res.data.status === 602) {
+        reject(res.data) // 无查询结果特殊处理
+      } 
+      else {
+        errorMsg(res.data.desc)
+        reject(res.data)
+      }
+    }).catch(err => {
+      errorMsg(err)
+      reject(err)
+    })
+  })
 }
 function getCase(params) {
   return promisePost(
