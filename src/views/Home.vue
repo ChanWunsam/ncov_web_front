@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div class="home" style="margin-bottom: 40px">
     <p class="title">
       <span>数据录入</span>
       <el-tooltip
@@ -170,31 +170,28 @@
           <el-table-column label="操作">
             <template slot-scope="scope">
               <div v-if="scope.row.edit">
-                <el-button type="success" size="mini" @click="cfmPatScope(scope.row)">
+                <el-button type="success" size="mini" @click="onSavePat(scope.row)">
                   <span>保存</span>
                 </el-button>
-                <el-button type="primary" size="mini" @click="cancelScope(scope.row, scope.$index)">
+                <el-button type="primary" size="mini" @click="onCancelPat(scope.row, scope.$index)">
                   <span>取消</span>
                 </el-button>
               </div>
               <div v-else>
-                <el-button type="primary" size="mini" @click="editPatScope(scope.row)">
+                <el-button type="primary" size="mini" @click="onEditPat(scope.row)">
                   <span>编辑</span>
                 </el-button>
-                <el-button type="danger" size="mini" @click="delPatScope(scope.row, scope.$index)">
+                <el-button type="danger" size="mini" @click="onDelPat(scope.row, scope.$index)">
                   <span>删除</span>
                 </el-button>
               </div>
             </template>
           </el-table-column>
-        </el-table>
-        <el-button 
-          type="primary" 
-          @click="addPatScope"
-          style="margin-top: 10px"
-        >添加病例</el-button> 
+        </el-table> 
       </el-form>
     </div>
+    <el-button type="primary" @click="onAddPat" style="margin-top: 30px">添加病例</el-button> 
+    <el-button type="success" @click="onSaveAllPat" style="margin-top: 30px">保存所有</el-button>
   </div>
 </template>
 
@@ -353,7 +350,7 @@ export default {
           this.hasData = true
           this.isInit = false
         } else {
-          this.$message(res.desc);
+          this.$message.error(res.desc);
         }
       })
       .catch(() => {
@@ -365,7 +362,7 @@ export default {
     },
     getPat(params) {
       if(!this.searchForm.date || !this.searchForm.locId) {
-        this.$message("请填入时间和地区")
+        this.$message.warning("请填入时间和地区")
       } else {
         getCase(params).then(res => {
           if(res.status === 0) {
@@ -374,7 +371,7 @@ export default {
               item.edit = false
             })
           } else {
-            this.$message(res.desc);
+            this.$message.error(res.desc);
           }
         })
       }
@@ -426,17 +423,17 @@ export default {
               isEmpty(params_count.countSourceText) ||
               isEmpty(params_count.countSourceUrl)
             ) {
-              this.$message("请填写完整，或输入有效数据")
+              this.$message.warning("请填写完整，或输入有效数据")
               this.disabledBtn = false;
               return false
             }
             insertCount(params_count)
               .then(res => {
                 if(res.status === 0) {
-                  this.$message("提交成功");
+                  this.$message.success("提交成功");
                   this.onReturn()
                 } else {
-                  this.$message(res.desc)
+                  this.$message.error(res.desc)
                 }
               })
               .finally(() => {
@@ -469,16 +466,16 @@ export default {
             isEmpty(param.countSourceText) ||
             isEmpty(param.countSourceUrl)
           ) {
-            this.$message("请填写完整，或输入有效数据")
+            this.$message.warning("请填写完整，或输入有效数据")
             this.disabledBtn = false;
             return false
           }
           modifyCount(param).then(res => {
             if(res.status == 0) {
-              this.$message("修改成功")
+              this.$message.success("修改成功")
               this.onReturn()
             } else {
-              this.$message(res.desc)
+              this.$message.error(res.desc)
             }
           })
           .finally(() => {
@@ -492,10 +489,10 @@ export default {
           this.disabledBtn = true;
           deleteCount(this.form.id).then((res) => {
             if(res.status == 0) {
-              this.$message("删除成功")
+              this.$message.success("删除成功")
               this.onReturn()
             } else {
-              this.$message(res.desc)
+              this.$message.error(res.desc)
             }
           })
           .finally(() => {
@@ -505,7 +502,7 @@ export default {
     },
 
     // 添加/确认/编辑/删除 表单里的病例栏
-    addPatScope() {
+    onAddPat() {
       this.formPat.patData.push({
         edit: true,
         id: "",
@@ -517,18 +514,18 @@ export default {
         locName: ""
       })
     },
-    cfmPatScope(row) {
+    onSavePat(row) {
       var isEmpty = this.isEmpty
       if (isEmpty(row.sampleSex) ||
         isEmpty(row.sampleAge) ||
         isEmpty(row.sampleSourceText) ||
         isEmpty(row.sampleSourceUrl)
       ) {
-        this.$message("请填写完整，或输入有效数据")
+        this.$message.warning("请填写完整，或输入有效数据")
         return false
       }
       if(!this.searchForm.date || !this.searchForm.locId) {
-        this.$message("请填入时间和地区")
+        this.$message.warning("请填入时间和地区")
         return false
       }
       var pat = {
@@ -549,29 +546,29 @@ export default {
       if(!row.id) {
         insertCases([pat]).then((res) => {
           if(res.status === 0) {
-            this.$message("保存成功");
+            this.$message.success("保存成功");
             row.edit = false;
             this.getPat(this.searchForm)
             this.reload() 
           } else {
-            this.$message(res.desc)
+            this.$message.error(res.desc)
           }
         })
       } else {
         pat.id = row.id
         modifyCase(pat).then((res) => { 
           if(res.status === 0) {
-            this.$message("修改成功");
+            this.$message.success("修改成功");
             row.edit = false;
             this.getPat(this.searchForm)
             this.reload()
           } else {
-            this.$message(res.desc)
+            this.$message.error(res.desc)
           }
         })
       }
     },
-    cancelScope(row, index) {
+    onCancelPat(row, index) {
       if(!row.id) {
         this.formPat.patData.splice(index, 1);
       } else {
@@ -580,24 +577,45 @@ export default {
         this.reload()
       }
     },
-    editPatScope(row) {
+    onEditPat(row) {
       row.edit = true
       this.readValue = row.sampleSex
       row.sampleSex = String(this.readValue)
       this.reload()
     },
-    delPatScope(row, index) {
+    onDelPat(row, index) {
       this.$confirm("确认删除？")
         .then(() => {
           deleteCase(row.id).then((res) => {
             if(res.status == 0) {
-              this.$message("删除成功");
+              this.$message.success("删除成功");
               this.getPat(this.searchForm)
             } else {
-              this.$message(res.desc)
+              this.$message.error(res.desc)
             }
           })
         }).catch(() => {});
+    },
+    onSaveAllPat() {
+      if(!this.searchForm.date || !this.searchForm.locId) {
+        this.$message.warning("请填入时间和地区")
+        return false
+      }
+      var isEmpty = this.isEmpty
+      this.formPat.patData.forEach((item, index) => {
+        if (isEmpty(item.sampleSex) ||
+          isEmpty(item.sampleAge) ||
+          isEmpty(item.sampleSourceText) ||
+          isEmpty(item.sampleSourceUrl)
+        ) {
+          this.$message.warning("请填写完整，或输入有效数据")
+          return false
+        }
+      })
+      // 先检查所有的填空是否有效，再逐个保存
+      this.formPat.patData.forEach((item, index) => {
+        this.onSavePat(item)
+      })
     },
 
     logout() {
@@ -759,5 +777,8 @@ export default {
   font-weight: bold;
   margin: 10px;
   text-align: center;
+}
+#nowData >>> .el-form-item__content {
+  margin: 0px!important;
 }
 </style>
