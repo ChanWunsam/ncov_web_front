@@ -29,7 +29,7 @@
               <el-form-item label="地区" prop="region">
                 <el-cascader
                   :props="props"
-                  :disabled="!isInit"
+                  :disabled="hasData"
                   v-model="form.region"
                   id="region"
                   clearable
@@ -39,26 +39,11 @@
                 <el-date-picker
                   v-model="form.date"
                   type="date"
-                  :disabled="!isInit"
+                  :disabled="hasData"
                   placeholder="选择日期"
                 >
                 </el-date-picker>
               </el-form-item>
-              <!-- <el-form-item label="新增确诊" prop="number1">
-                <el-input v-model="form.number1"></el-input>
-              </el-form-item>
-              <el-form-item label="新增康复" prop="number2">
-                <el-input v-model="form.number2"></el-input>
-              </el-form-item>
-              <el-form-item label="新增死亡" prop="number3">
-                <el-input v-model="form.number3"></el-input>
-              </el-form-item>
-              <el-form-item label="源数据" prop="text">
-                <el-input type="textarea" v-model="form.text"></el-input>
-              </el-form-item>
-              <el-form-item label="源url" prop="url">
-                <el-input type="textarea" v-model="form.url"></el-input>
-              </el-form-item> -->
             </el-form>
           </el-main>
         </el-container>
@@ -468,7 +453,7 @@ export default {
           this.form.countData.forEach((item, index) => {
             item.edit = false
           })
-          // this.hasData = true
+          this.hasData = true
           // this.isInit = false
         } else {
           this.$message.error(res.desc);
@@ -495,6 +480,7 @@ export default {
           this.formPat.patData.forEach((item, index) => {
             item.edit = false
           })
+          this.hasData = true
         } else {
           this.$message.error(res.desc);
         }
@@ -513,7 +499,7 @@ export default {
     onReturn() {
       this.clearData()
       // this.isInit = true
-      // this.hasData = false
+      this.hasData = false
     },
     onSubmit() {
       // if(!this.searchForm.date || !this.searchForm.locId) {
@@ -706,7 +692,7 @@ export default {
       }
     },
     onDelCount(row, index) {
-      this.$confirm("将同时删除所有病例，确认删除统计？")
+      this.$confirm("确认删除统计？")
         .then(() => {
           deleteCount(row.id).then((res) => {
             if(res.status == 0) {
@@ -879,6 +865,23 @@ export default {
             .querySelectorAll("input")[0]
             .value.split(" / ").join("-");
         }, 300)
+        if(
+          this.formPat.patData.length === 0 &&
+          this.form.countData.length === 0
+        ) {
+          this.hasData = false
+        }
+      },
+      deep: true
+    },
+    formPat: {
+      handler: function() {
+        if(
+          this.formPat.patData.length === 0 &&
+          this.form.countData.length === 0
+        ) {
+          this.hasData = false
+        }
       },
       deep: true
     }
