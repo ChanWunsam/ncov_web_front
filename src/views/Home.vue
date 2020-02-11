@@ -114,8 +114,17 @@
       >
         <el-table 
           :data="formPat.patData"
+          style="width:100%"
         >
-          <el-table-column property="sampleAge" label="年龄">
+          <el-table-column property="locName" label="地区" width="150">
+            <template slot-scope="scope">
+              <span v-if="scope.row.edit">
+                {{ scope.row.locName ? scope.row.locName : regionName }}
+              </span>
+              <span v-else>{{scope.row.locName}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column property="sampleAge" label="年龄" width="150">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit" 
                 :prop="'patData.' + scope.$index + '.sampleAge'"
@@ -125,7 +134,7 @@
               <span v-else>{{scope.row.sampleAge}}</span>
             </template>
           </el-table-column>
-          <el-table-column property="sampleSex" label="性别">
+          <el-table-column property="sampleSex" label="性别" width="150">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit" 
                 :prop="'patData.' + scope.$index + '.sampleSex'" 
@@ -167,7 +176,7 @@
               <span v-else>{{scope.row.sampleSourceUrl}}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作">
+          <el-table-column label="操作" width="150">
             <template slot-scope="scope">
               <div v-if="scope.row.edit">
                 <el-button type="success" size="mini" @click="onSavePat(scope.row)">
@@ -233,6 +242,7 @@ export default {
     return {
       isFormAlive: true, // 用于强制刷新
       regionId: localStorage.getItem("regionId"),
+      regionName: "",
       form: {
         region: "",
         date1: "",
@@ -637,6 +647,12 @@ export default {
           locId: this.form.region[this.form.region.length - 1],
           date: new Date(this.form.date1).Format("yyyy-MM-dd")
         };
+        setTimeout(() => {
+          this.regionName = document.getElementById("region")
+            .querySelectorAll(".el-input")[0]
+            .querySelectorAll("input")[0]
+            .value.split(" / ").join("-");
+        }, 300)
       },
       deep: true
     }
@@ -777,6 +793,9 @@ export default {
   font-weight: bold;
   margin: 10px;
   text-align: center;
+}
+#nowData >>> .el-form-item {
+  margin: 0px!important;
 }
 #nowData >>> .el-form-item__content {
   margin: 0px!important;
