@@ -371,20 +371,16 @@ export default {
       });
     },
     getPat(params) {
-      if(!this.searchForm.date || !this.searchForm.locId) {
-        this.$message.warning("请填入时间和地区")
-      } else {
-        getCase(params).then(res => {
-          if(res.status === 0) {
-            this.formPat.patData = res.Patients
-            this.formPat.patData.forEach((item, index) => {
-              item.edit = false
-            })
-          } else {
-            this.$message.error(res.desc);
-          }
-        })
-      }
+      getCase(params).then(res => {
+        if(res.status === 0) {
+          this.formPat.patData = res.Patients
+          this.formPat.patData.forEach((item, index) => {
+            item.edit = false
+          })
+        } else {
+          this.$message.error(res.desc);
+        }
+      })
     },
     // onShow() {
     //   this.isInit = false
@@ -420,6 +416,10 @@ export default {
             isEmpty(params_count.countSourceText) &&
             isEmpty(params_count.countSourceUrl)
           ) {
+            if(!this.checkDateRegion(this.searchForm)) {
+              this.disabledBtn = false;
+              return false
+            }
             this.searchForm = {
               locId: this.form.region[this.form.region.length - 1],
               date: new Date(this.form.date1).Format("yyyy-MM-dd")
@@ -427,13 +427,7 @@ export default {
             this.getData(this.searchForm)
           } else {
             // 检查输入数据是否都有效
-            if (isEmpty(params_count.countConfirm) ||
-              isEmpty(params_count.countRecover) ||
-              isEmpty(params_count.countDead) ||
-              isEmpty(params_count.countSourceText) ||
-              isEmpty(params_count.countSourceUrl)
-            ) {
-              this.$message.warning("请填写完整，或输入有效数据")
+            if(!this.checkDateRegion(this.searchForm) || !this.checkCount(params_count)) {
               this.disabledBtn = false;
               return false
             }
@@ -469,14 +463,7 @@ export default {
             countSourceUrl: this.form.url,
             countSourceText: this.form.text,
           };
-          var isEmpty = this.isEmpty
-          if (isEmpty(param.countConfirm) ||
-            isEmpty(param.countRecover) ||
-            isEmpty(param.countDead) ||
-            isEmpty(param.countSourceText) ||
-            isEmpty(param.countSourceUrl)
-          ) {
-            this.$message.warning("请填写完整，或输入有效数据")
+          if(!this.checkDateRegion(this.searchForm) || !this.checkCount(param)) {
             this.disabledBtn = false;
             return false
           }
@@ -525,16 +512,7 @@ export default {
       })
     },
     onSavePat(row) {
-      if(!this.searchForm.date || !this.searchForm.locId) {
-        this.$message.warning("请填入时间和地区")
-        return false
-      }
-      var isEmpty = this.isEmpty
-      if (
-        isEmpty(row.sampleSourceText) ||
-        isEmpty(row.sampleSourceUrl)
-      ) {
-        this.$message.warning("请填入源数据和源url")
+      if(!this.checkDateRegion(this.searchForm) || !this.checkPat(row)) {
         return false
       }
       var pat = {
@@ -606,24 +584,52 @@ export default {
         }).catch(() => {});
     },
     onSaveAllPat() {
-      if(!this.searchForm.date || !this.searchForm.locId) {
+      if(this.checkDateRegion(this.searchForm)) {
+        var valid = true
+        this.formPat.patData.forEach((item, index) => {
+          if(!this.checkPat(item)) {
+            valid = false
+          }
+        })
+        if(valid) {
+          // 先检查所有的填空是否有效，再逐个保存
+          this.formPat.patData.forEach((item, index) => {
+            this.onSavePat(item)
+          })
+        }
+      }
+    },
+    checkDateRegion(form) {
+      if(!form.date || !form.locId) {
         this.$message.warning("请填入时间和地区")
         return false
       }
+      return true
+    },
+    checkPat(pat) {
       var isEmpty = this.isEmpty
-      this.formPat.patData.forEach((item, index) => {
-        if (
-          isEmpty(item.sampleSourceText) ||
-          isEmpty(item.sampleSourceUrl)
-        ) {
-          this.$message.warning("请填入源数据和源url")
-          return false
-        }
-      })
-      // 先检查所有的填空是否有效，再逐个保存
-      this.formPat.patData.forEach((item, index) => {
-        this.onSavePat(item)
-      })
+      if (
+        isEmpty(pat.sampleSourceText) ||
+        isEmpty(pat.sampleSourceUrl)
+      ) {
+        this.$message.warning("请填入源数据和源url")
+        return false
+      }
+      return true
+    },
+    checkCount(count) {
+      var isEmpty = this.isEmpty
+      if (
+        isEmpty(count.countConfirm) ||
+        isEmpty(count.countRecover) ||
+        isEmpty(count.countDead) ||
+        isEmpty(count.countSourceText) ||
+        isEmpty(count.countSourceUrl)
+      ) {
+        this.$message.warning("请填入所有的统计信息")
+        return false
+      }
+      return true
     },
 
     logout() {
