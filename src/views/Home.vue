@@ -90,7 +90,7 @@
       style="border-bottom: 1px solid #eee; marigin: 10px 0px;"
     >统计信息</p>
 
-    <div style="padding:0px 40px;" id="nowData">
+    <div style="padding:0px 40px;" id="formData">
       <el-form
         :ref="form"
         :model="form"
@@ -188,7 +188,7 @@
         </el-table> 
       </el-form>
     </div>
-    <el-button type="primary" @click="onAddCount" style="margin-top: 30px">添加统计</el-button> 
+    <el-button type="primary" @click="onAddCount" style="margin: 30px 0px 20px 0px">添加统计</el-button> 
     <!-- <el-button type="success" @click="onSaveAllCounts" style="margin-top: 30px">保存所有统计</el-button> -->
     
     <p 
@@ -1022,6 +1022,12 @@ export default {
   font-weight: bold;
   margin: 10px;
   text-align: center;
+}
+#formData >>> .el-form-item {
+  margin: 0px!important;
+}
+#formData >>> .el-form-item__content {
+  margin: 0px!important;
 }
 #nowData >>> .el-form-item {
   margin: 0px!important;
