@@ -525,17 +525,16 @@ export default {
       })
     },
     onSavePat(row) {
+      if(!this.searchForm.date || !this.searchForm.locId) {
+        this.$message.warning("请填入时间和地区")
+        return false
+      }
       var isEmpty = this.isEmpty
-      if (isEmpty(row.sampleSex) ||
-        isEmpty(row.sampleAge) ||
+      if (
         isEmpty(row.sampleSourceText) ||
         isEmpty(row.sampleSourceUrl)
       ) {
-        this.$message.warning("请填写完整，或输入有效数据")
-        return false
-      }
-      if(!this.searchForm.date || !this.searchForm.locId) {
-        this.$message.warning("请填入时间和地区")
+        this.$message.warning("请填入源数据和源url")
         return false
       }
       var pat = {
@@ -613,12 +612,11 @@ export default {
       }
       var isEmpty = this.isEmpty
       this.formPat.patData.forEach((item, index) => {
-        if (isEmpty(item.sampleSex) ||
-          isEmpty(item.sampleAge) ||
+        if (
           isEmpty(item.sampleSourceText) ||
           isEmpty(item.sampleSourceUrl)
         ) {
-          this.$message.warning("请填写完整，或输入有效数据")
+          this.$message.warning("请填入源数据和源url")
           return false
         }
       })
