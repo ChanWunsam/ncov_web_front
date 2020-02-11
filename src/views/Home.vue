@@ -24,19 +24,20 @@
               ref="form"
               :model="form"
               label-width="100px"
-              :rules="rules2"
+              :rules="rules"
             >
               <el-form-item label="地区" prop="region">
                 <el-cascader
                   :props="props"
                   :disabled="!isInit"
                   v-model="form.region"
+                  id="region"
                   clearable
                 ></el-cascader>
               </el-form-item>
-              <el-form-item label="日期" prop="date1">
+              <el-form-item label="日期" prop="date">
                 <el-date-picker
-                  v-model="form.date1"
+                  v-model="form.date"
                   type="date"
                   :disabled="!isInit"
                   placeholder="选择日期"
@@ -109,7 +110,7 @@
       <el-form
         :ref="formPat"
         :model="formPat"
-        v-if="isFormAlive"
+        v-if="isFormPatAlive"
         label-width="90px"
       >
         <el-table 
@@ -240,19 +241,25 @@ export default {
       }
     };
     return {
-      isFormAlive: true, // 用于强制刷新
+      isFormPatAlive: true, // 用于强制刷新
+      isFormAlive: true,
+      disabledBtn: false,
+      readValue: "", // 用于解决selcet框回显value的bug
+
+      isInit: true, // 页面初始化时，只显示地区、时间两个框和确认按钮（只有页面初始化时才可修改地区、时间）
+      hasData: false, // 点击确认按钮后，是否有疫情数据，无的话显示提交按钮，反之则无
+
       regionId: localStorage.getItem("regionId"),
       regionName: "",
       form: {
         region: "",
-        date1: "",
+        date: "",
         number1: null, // 确诊
         number2: null, // 康复
         number3: null, // 死亡
         text: null,
         url: null
       },
-      disabledBtn: false,
       searchForm: {
         date: "",
         region: ""
@@ -269,11 +276,10 @@ export default {
         //   locName
         // }
       },
-      readValue: "", // 用于解决selcet框回显value的bug
-      rules2: {
-        age: [{ validator: checkAge, trigger: "blur" }],
-        sex: [{ validator: checkAge, trigger: "blur" }],
-        date1: [
+      rules: {
+        sampleAge: [{ validator: checkAge, trigger: "blur" }],
+        // sex: [{ validator: checkAge, trigger: "blur" }],
+        date: [
           { type: "date", required: true, message: "不能为空", trigger: "blur" }
         ],
         number1: [{ validator: checkInteger, trigger: "blur" }],
@@ -281,9 +287,6 @@ export default {
         number3: [{ validator: checkInteger, trigger: "blur" }],
         region: [{ required: true, message: "不能为空", trigger: "blur" }]
       },
-      hasDetailCase: false,
-      isInit: true, // 页面初始化时，只显示地区、时间两个框和确认按钮（只有页面初始化时才可修改地区、时间）
-      hasData: false, // 点击确认按钮后，是否有疫情数据，无的话显示提交按钮，反之则无
       props: {
         lazy: true,
         checkStrictly: true,
@@ -316,10 +319,10 @@ export default {
   },
 
   methods: {
-    reload () {
-      this.isFormAlive = false
+    reload (form) {
+      form = false
       this.$nextTick(function() {
-        this.isFormAlive = true
+        form = true
       })
     },
     // 注：仅用于判断输入值是否符合
@@ -333,7 +336,7 @@ export default {
     clearData() {
       this.form = {
         region: this.form.region,
-        date1: this.form.date1,
+        date: this.form.date,
         number1: null, // 确诊
         number2: null, // 康复
         number3: null, // 死亡
@@ -390,7 +393,7 @@ export default {
     //   this.isInit = false
     //   this.searchForm = {
     //     locId: this.form.region[this.form.region.length - 1],
-    //     date: new Date(this.form.date1).Format("yyyy-MM-dd")
+    //     date: new Date(this.form.date).Format("yyyy-MM-dd")
     //   };
     //   this.getData(this.searchForm)
     // },
@@ -400,11 +403,15 @@ export default {
       this.hasData = false
     },
     onSubmit() {
+      if(!this.searchForm.date || !this.searchForm.locId) {
+        this.$message.warning("请填入时间和地区")
+        return false
+      }
       this.disabledBtn = true;
       var isEmpty = this.isEmpty;
       var params_count = {
         countRegionId: this.form.region[this.form.region.length - 1],
-        countDate: new Date(this.form.date1).Format("yyyy-MM-dd"),
+        countDate: new Date(this.form.date).Format("yyyy-MM-dd"),
         countConfirm: this.form.number1,
         countRecover: this.form.number2,
         countDead: this.form.number3,
@@ -422,7 +429,7 @@ export default {
           ) {
             this.searchForm = {
               locId: this.form.region[this.form.region.length - 1],
-              date: new Date(this.form.date1).Format("yyyy-MM-dd")
+              date: new Date(this.form.date).Format("yyyy-MM-dd")
             };
             this.getData(this.searchForm)
           } else {
@@ -462,7 +469,7 @@ export default {
           var param = {
             id: this.form.id,
             countRegionId: this.form.region[this.form.region.length - 1],
-            countDate: new Date(this.form.date1).Format("yyyy-MM-dd"),
+            countDate: new Date(this.form.date).Format("yyyy-MM-dd"),
             countConfirm: this.form.number1,
             countRecover: this.form.number2,
             countDead: this.form.number3,
@@ -547,7 +554,7 @@ export default {
         sampleDate: new Date().Format(
           "yyyy-MM-dd"
         ), // 录入的时间
-        sampleConfirmTime: new Date(this.form.date1).Format(
+        sampleConfirmTime: new Date(this.form.date).Format(
           "yyyy-MM-dd"
         ),
         sampleSourceUrl: row.sampleSourceUrl,
@@ -559,7 +566,7 @@ export default {
             this.$message.success("保存成功");
             row.edit = false;
             this.getPat(this.searchForm)
-            this.reload() 
+            this.reload(this.isFormPatAlive) 
           } else {
             this.$message.error(res.desc)
           }
@@ -571,7 +578,7 @@ export default {
             this.$message.success("修改成功");
             row.edit = false;
             this.getPat(this.searchForm)
-            this.reload()
+            this.reload(this.isFormPatAlive)
           } else {
             this.$message.error(res.desc)
           }
@@ -584,14 +591,14 @@ export default {
       } else {
         row.edit = false
         this.getPat(this.searchForm)
-        this.reload()
+        this.reload(this.isFormPatAlive)
       }
     },
     onEditPat(row) {
       row.edit = true
       this.readValue = row.sampleSex
       row.sampleSex = String(this.readValue)
-      this.reload()
+      this.reload(this.isFormPatAlive)
     },
     onDelPat(row, index) {
       this.$confirm("确认删除？")
@@ -645,7 +652,7 @@ export default {
       handler: function() {
         this.searchForm = {
           locId: this.form.region[this.form.region.length - 1],
-          date: new Date(this.form.date1).Format("yyyy-MM-dd")
+          date: new Date(this.form.date).Format("yyyy-MM-dd")
         };
         setTimeout(() => {
           this.regionName = document.getElementById("region")
