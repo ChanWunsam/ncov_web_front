@@ -5,7 +5,7 @@ import {
 } from 'element-ui'
 var request = Vue.axios
 
-function erroeMsg(error) {
+function errorMsg(error) {
   Message({
     message: error,
     type: 'error',
@@ -13,150 +13,88 @@ function erroeMsg(error) {
   })
 }
 
-function Msg(error) {
-  Message({
-    message: error,
-    // type: 'error',
-    duration: 3 * 500
+// function Msg(error) {
+//   Message({
+//     message: error,
+//     type: 'error',
+//     duration: 3 * 500
+//   })
+// }
+
+function promisePost(url, params) {
+  return new Promise(function (resolve, reject) {
+    request.post(url, params).then(res => {
+      if (res.data.status == 0) {
+        resolve(res.data)
+      } else {
+        errorMsg(res.data.desc)
+        reject(res.data)
+      }
+    }).catch(err => {
+      errorMsg(err)
+      reject(err)
+    })
   })
 }
 
 function getCount(params) {
-
-  return new Promise(function (resolve, reject) {
-    request.post("/api/info/getCount", qs.stringify(params)).then(res => {
-      if (res.data.status == 0) {
-        resolve(res.data)
-      } else {
-        Msg(res.data.desc)
-        reject(res.data)
-      }
-    }).catch(err => {
-      erroeMsg(err)
-      reject(err)
-    })
-  })
+  return promisePost(
+    "/api/info/getCount", 
+    qs.stringify(params)
+  );
 }
 function getCase(params) {
-  
-  return new Promise(function (resolve, reject) {
-    request.post("/api/info/getPat", qs.stringify(params)).then(res => {
-      if (res.data.status == 0) {
-        resolve(res.data)
-      } else {
-        Msg(res.data.desc)
-        reject(res.data)
-      }
-    }).catch(err => {
-      erroeMsg(err)
-      reject(err)
-    })
-  })
+  return promisePost(
+    "/api/info/getPat",
+    qs.stringify(params)
+  )
 }
 
 //insert count
 
 function insertCount(params) {
-
-  return new Promise(function (resolve, reject) {
-    request.post("/api/count/insert", qs.stringify(params)).then(res => {
-      if (res.data.status == 0) {
-        resolve(res.data)
-      } else {
-        Msg(res.data.desc)
-        reject(res.data)
-      }
-    }).catch(err => {
-      erroeMsg(err)
-      reject(err)
-    })
-  })
+  return promisePost(
+    "/api/count/insert", 
+    qs.stringify(params)
+  )
 }
 
 
 function insertCases(params) {
-
-  return new Promise(function (resolve, reject) {
-    // 这里不返回stringify
-    request.post("/api/sample/insert", params).then(res => {
-      if (res.data.status == 0) {
-        resolve(res.data)
-      } else {
-        Msg(res.data.desc)
-        reject(res.data)
-      }
-    }).catch(err => {
-      erroeMsg(err)
-      reject(err)
-    })
-  })
+  // 这里不返回stringify
+  return promisePost(
+    "/api/sample/insert", 
+    params
+  )
 }
 
 function modifyCount(param) {
-
-  return new Promise(function (resolve, reject) {
-    request.post("/api/count/update", qs.stringify(param)).then(res => {
-      if (res.data.status == 0) {
-        resolve(res.data)
-      } else {
-        Msg(res.data.desc)
-        reject(res.data)
-      }
-    }).catch(err => {
-      erroeMsg(err)
-      reject(err)
-    })
-  })
+  return promisePost(
+    "/api/count/update", 
+    qs.stringify(param)
+  )
 }
 
 
 function modifyCase(param) {
-
-  return new Promise(function (resolve, reject) {
-    request.post("/api/sample/update", qs.stringify(param)).then(res => {
-      if (res.data.status == 0) {
-        resolve(res.data)
-      } else {
-        Msg(res.data.desc)
-        reject(res.data)
-      }
-    }).catch(err => {
-      erroeMsg(err)
-      reject(err)
-    })
-  })
+  return promisePost(
+    "/api/sample/update",
+    qs.stringify(param)
+  )
 }
 
 function deleteCase(id) {
-  return new Promise(function (resolve, reject) {
-    request.post("/api/sample/delete", qs.stringify({ patId: id })).then(res => {
-      if (res.data.status == 0) {
-        resolve(res.data)
-      } else {
-        Msg(res.data.desc)
-        reject(res.data)
-      }
-    }).catch(err => {
-      erroeMsg(err)
-      reject(err)
-    })
-  })
+  return promisePost(
+    "/api/sample/delete", 
+    qs.stringify({ patId: id })
+  )
 }
 
 function deleteCount(id) {
-  return new Promise(function (resolve, reject) {
-    request.post("/api/count/delete", qs.stringify({ countId: id })).then(res => {
-      if (res.data.status == 0) {
-        resolve(res.data)
-      } else {
-        Msg(res.data.desc)
-        reject(res.data)
-      }
-    }).catch(err => {
-      erroeMsg(err)
-      reject(err)
-    })
-  })
+  return promisePost(
+    "/api/count/delete",
+    qs.stringify({ countId: id })
+  )
 }
 
 export {
