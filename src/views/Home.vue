@@ -82,7 +82,7 @@
         type="default"
         @click="onReturn"
         style="margin-top: 12px; "
-      > 清空 </el-button>
+      > 解锁 </el-button>
     </el-footer>
     
     <p 
@@ -819,10 +819,12 @@ export default {
     checkPat(pat) {
       var isEmpty = this.isEmpty
       if (
+        isEmpty(pat.sampleSex) ||
+        isEmpty(pat.sampleAge) ||
         isEmpty(pat.sampleSourceText) ||
         isEmpty(pat.sampleSourceUrl)
       ) {
-        this.$message.warning("请填入源数据和源url")
+        this.$message.warning("请填入所有的病例信息")
         return false
       }
       return true
