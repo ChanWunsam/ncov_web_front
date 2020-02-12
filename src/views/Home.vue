@@ -413,10 +413,16 @@ export default {
   },
 
   methods: {
-    reload (form) {
-      form = false
+    reloadCount () {
+      this.isFormAlive = false
       this.$nextTick(function() {
-        form = true
+        this.isFormAlive = true
+      })
+    },
+    reloadPat () {
+      this.isFormPatAlive = false
+      this.$nextTick(function() {
+        this.isFormPatAlive = true
       })
     },
     // 注：仅用于判断输入值是否符合
@@ -458,6 +464,7 @@ export default {
         } else {
           this.$message.error(res.desc);
         }
+        this.reloadCount()
       })
       .catch((res) => {
         this.clearData()
@@ -484,6 +491,7 @@ export default {
         } else {
           this.$message.error(res.desc);
         }
+        this.reloadPat()
       })
     },
     onSearch() {
@@ -626,7 +634,7 @@ export default {
     },
     onEditCount(row) {
       row.edit = true
-      this.reload(this.isFormAlive)
+      this.reloadCount()
     },
     onCancelCount(row, index) {
       if(!row.id) {
@@ -634,7 +642,6 @@ export default {
       } else {
         row.edit = false
         this.getCount(this.searchForm)
-        this.reload(this.isFormAlive)
       }
     },
     onSaveCount(row) {
@@ -656,7 +663,6 @@ export default {
             this.$message.success("保存统计成功");
             row.edit = false;
             this.getCount(this.searchForm)
-            this.reload(this.isFormAlive) 
           } else {
             this.$message.error(res.desc)
           }
@@ -668,7 +674,6 @@ export default {
             this.$message.success("修改统计成功");
             row.edit = false;
             this.getCount(this.searchForm)
-            this.reload(this.isFormAlive)
           } else {
             this.$message.error(res.desc)
           }
@@ -744,7 +749,6 @@ export default {
             this.$message.success("保存病例成功");
             row.edit = false;
             this.getPat(this.searchForm)
-            this.reload(this.isFormPatAlive) 
           } else {
             this.$message.error(res.desc)
           }
@@ -756,7 +760,6 @@ export default {
             this.$message.success("修改病例成功");
             row.edit = false;
             this.getPat(this.searchForm)
-            this.reload(this.isFormPatAlive)
           } else {
             this.$message.error(res.desc)
           }
@@ -769,14 +772,13 @@ export default {
       } else {
         row.edit = false
         this.getPat(this.searchForm)
-        this.reload(this.isFormPatAlive)
       }
     },
     onEditPat(row) {
       row.edit = true
       this.readValue = row.sampleSex
       row.sampleSex = String(this.readValue)
-      this.reload(this.isFormPatAlive)
+      this.reloadPat()
     },
     onDelPat(row, index) {
       this.$confirm("确认删除病例？")
