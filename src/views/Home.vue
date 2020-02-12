@@ -622,8 +622,8 @@ export default {
           edit: true,
           id: "",
           countConfirm: "",
-          countRecover: "",
-          countDead: "",
+          countRecover: "0",
+          countDead: "0",
           countSourceText: "",
           countSourceUrl: "",
           locName: ""
