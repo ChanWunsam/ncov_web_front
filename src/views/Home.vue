@@ -1,21 +1,21 @@
 <template>
   <div class="home" style="margin-bottom: 40px">
-    <p class="title">
+    <!-- <p class="title">
       <span>数据录入</span>
-      <el-tooltip
-        class="item"
-        effect="dark"
-        content="注销"
-        placement="top-start"
-      >
-        <el-button
-          icon="el-icon-switch-button"
-          style="float:right"
-          circle
-          @click="logout"
-        ></el-button>
-      </el-tooltip>
-    </p>
+    </p> -->
+    <el-tooltip
+      class="item"
+      effect="dark"
+      content="注销"
+      placement="top-start"
+    >
+      <el-button
+        icon="el-icon-switch-button"
+        style="float:right; position: absolute; top: 20px; right: 20px"
+        circle
+        @click="logout"
+      ></el-button>
+    </el-tooltip>
     <div class="flex-box">
       <div class="flex-item">
         <el-container>
@@ -50,44 +50,37 @@
       </div>
     </div>
 
-    <el-footer style="margin-bottom: 30px">
-      <!-- 按钮组合 -->
-      <el-button
-        type="primary"
-        @click="onSearch"
-        style="margin-top: 12px; "
-      > 查询 </el-button>
-      <!-- <el-button
-        v-show="!hasData"
-        type="primary"
-        @click="onSubmit"
-        style="margin-top: 12px; "
-        :disabled="disabledBtn"
-      >查询/提交</el-button> -->
-      <!-- <el-button
-        v-show="hasData"
-        type="warning"
-        @click="onModify"
-        style="margin-top: 12px; "
-        :disabled="disabledBtn"
-      >修改</el-button> -->
-      <!-- <el-button
-        v-show="hasData"
-        type="danger"
-        @click="onDelete"
-        style="margin-top: 12px; "
-        :disabled="disabledBtn"
-      >删除</el-button> -->
-      <el-button
-        type="default"
-        @click="onReturn"
-        style="margin-top: 12px; "
-      > 解锁 </el-button>
-    </el-footer>
+    <!-- 按钮组合 -->
+    <el-button
+      type="primary"
+      @click="onSearch"
+    > 查询 </el-button>
+    <!-- <el-button
+      v-show="!hasData"
+      type="primary"
+      @click="onSubmit"
+      :disabled="disabledBtn"
+    >查询/提交</el-button> -->
+    <!-- <el-button
+      v-show="hasData"
+      type="warning"
+      @click="onModify"
+      :disabled="disabledBtn"
+    >修改</el-button> -->
+    <!-- <el-button
+      v-show="hasData"
+      type="danger"
+      @click="onDelete"
+      :disabled="disabledBtn"
+    >删除</el-button> -->
+    <el-button
+      type="default"
+      @click="onReturn"
+    > 解锁 </el-button>
     
     <p 
       class="title" 
-      style="border-bottom: 1px solid #eee; marigin: 10px 0px;"
+      style="border-bottom: 1px solid #eee"
     >统计信息</p>
 
     <div style="padding:0px 40px;" id="formData">
@@ -188,12 +181,12 @@
         </el-table> 
       </el-form>
     </div>
-    <el-button type="primary" @click="onAddCount" style="margin: 30px 0px 20px 0px">添加统计</el-button> 
-    <!-- <el-button type="success" @click="onSaveAllCounts" style="margin-top: 30px">保存所有统计</el-button> -->
+    <el-button type="primary" @click="onAddCount" style="margin: 10px">添加统计</el-button> 
+    <!-- <el-button type="success" @click="onSaveAllCounts" style="margin-top: 10px">保存所有统计</el-button> -->
     
     <p 
       class="title" 
-      style="border-bottom: 1px solid #eee; marigin: 10px 0px;"
+      style="border-bottom: 1px solid #eee"
     >具体病例</p>
     <div style="padding:0px 40px;" id="nowData">
       <el-form
@@ -289,8 +282,8 @@
         </el-table> 
       </el-form>
     </div>
-    <el-button type="primary" @click="onAddPat" style="margin-top: 30px">添加病例</el-button> 
-    <el-button type="success" @click="onSaveAllPats" style="margin-top: 30px">保存所有病例</el-button>
+    <el-button type="primary" @click="onAddPat" style="margin-top: 10px">添加病例</el-button> 
+    <el-button type="success" @click="onSaveAllPats" style="margin-top: 10px">保存所有病例</el-button>
   </div>
 </template>
 
@@ -996,6 +989,10 @@ export default {
 .home {
   margin: auto 0;
 }
+
+.flex-box .el-main {
+  padding: 20px 20px 0 20px !important;
+}
 .flex-box .el-input {
   width: 100% !important;
 }
@@ -1021,10 +1018,12 @@ export default {
   width: 50%;
 }
 .title {
-  font-size: 26px;
-  line-height: 50px;
+  font-size: 20px;
+  line-height: 20px;
   font-weight: bold;
-  margin: 10px;
+  /* margin: 10px; */
+  padding: 15px 0px 15px 0px;
+  margin: 0px;
   text-align: center;
 }
 #formData >>> .el-form-item {
