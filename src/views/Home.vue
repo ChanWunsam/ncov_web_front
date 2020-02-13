@@ -29,7 +29,7 @@
               <el-form-item label="地区" prop="region">
                 <el-cascader
                   :props="props"
-                  :disabled="hasData"
+                  :disabled="disableSearch"
                   v-model="form.region"
                   id="region"
                   clearable
@@ -39,7 +39,7 @@
                 <el-date-picker
                   v-model="form.date"
                   type="date"
-                  :disabled="hasData"
+                  :disabled="disableSearch"
                   placeholder="选择日期"
                 >
                 </el-date-picker>
@@ -56,19 +56,19 @@
       @click="onSearch"
     > 查询 </el-button>
     <!-- <el-button
-      v-show="!hasData"
+      v-show="!disableSearch"
       type="primary"
       @click="onSubmit"
       :disabled="disabledBtn"
     >查询/提交</el-button> -->
     <!-- <el-button
-      v-show="hasData"
+      v-show="disableSearch"
       type="warning"
       @click="onModify"
       :disabled="disabledBtn"
     >修改</el-button> -->
     <!-- <el-button
-      v-show="hasData"
+      v-show="disableSearch"
       type="danger"
       @click="onDelete"
       :disabled="disabledBtn"
@@ -96,9 +96,14 @@
         >
           <el-table-column property="locName" label="地区" width="150">
             <template slot-scope="scope">
-              <span v-if="scope.row.edit">
-                {{ scope.row.locName ? scope.row.locName : regionName }}
-              </span>
+              <el-form-item v-if="scope.row.edit">
+                <!-- {{ scope.row.locName ? scope.row.locName : regionName }} -->
+                <el-cascader
+                  :props="subRegions"
+                  v-model = "scope.row.locId"
+                  clearable
+                ></el-cascader>
+              </el-form-item>
               <span v-else>{{scope.row.locName}}</span>
             </template>
           </el-table-column>
@@ -201,9 +206,14 @@
         >
           <el-table-column property="locName" label="地区" width="150">
             <template slot-scope="scope">
-              <span v-if="scope.row.edit">
-                {{ scope.row.locName ? scope.row.locName : regionName }}
-              </span>
+              <el-form-item v-if="scope.row.edit">
+                <!-- {{ scope.row.locName ? scope.row.locName : regionName }} -->
+                <el-cascader
+                  :props="subRegions"
+                  v-model = "scope.row.locId"
+                  clearable
+                ></el-cascader>
+              </el-form-item>
               <span v-else>{{scope.row.locName}}</span>
             </template>
           </el-table-column>
@@ -329,8 +339,8 @@ export default {
       readValue: "", // 用于解决selcet框回显value的bug
       closeMsg: false, // 用于关掉删除统计信息后的无查询结果
       // todo isInit没有使用，但暂时不删掉
-      isInit: true, // 页面初始化时，只显示地区、时间两个框和确认按钮（只有页面初始化时才可修改地区、时间）
-      hasData: false, // 点击确认按钮后，是否有疫情数据，无的话显示提交按钮，反之则无
+      // isInit: true, // 页面初始化时，只显示地区、时间两个框和确认按钮（只有页面初始化时才可修改地区、时间）
+      disableSearch: false, // 点击确认按钮后，是否有疫情数据，无的话显示提交按钮，反之则无
 
       regionId: localStorage.getItem("regionId"),
       regionName: "",
@@ -401,7 +411,42 @@ export default {
               resolve(nodes);
             });
         }
-      }
+      },
+      subRegions: {
+        lazy: true,
+        checkStrictly: true,
+        lazyLoad(node, resolve) {
+          // if(!checkDateRegion(window.vue.$data.searchForm)) {
+          if(!window.vue.$data.searchForm.date || !window.vue.$data.searchForm.locId) {
+            this.$message.warning("请填入时间和地区")
+            return false
+          }
+          var { level } = node;
+          var locId = window.vue.$data.searchForm.locId // this获取不到。。。只能hack写法了，而且必须锁定查询框
+          // eslint-disable-next-line no-undef
+          axios
+            .post(
+              "/api/info/getNextLoc",
+              qs.stringify({
+                locId:
+                  level == 0
+                    ? locId
+                    : node.data.value
+              })
+            )
+            .then(res => {
+              var nodes = [];
+              res.data.forEach(item => {
+                nodes.push({
+                  value: item.id,
+                  label: item.name
+                });
+              });
+              window.vue.$data.disableSearch = true
+              resolve(nodes);
+            });
+        }
+      },
     };
   },
 
@@ -452,7 +497,7 @@ export default {
           this.form.countData.forEach((item, index) => {
             item.edit = false
           })
-          this.hasData = true
+          this.disableSearch = true
           // this.isInit = false
         } else {
           this.$message.error(res.desc);
@@ -480,7 +525,7 @@ export default {
           this.formPat.patData.forEach((item, index) => {
             item.edit = false
           })
-          this.hasData = true
+          this.disableSearch = true
         } else {
           this.$message.error(res.desc);
         }
@@ -500,7 +545,7 @@ export default {
     onReturn() {
       this.clearData()
       // this.isInit = true
-      this.hasData = false
+      this.disableSearch = false
     },
     onSubmit() {
       // if(!this.searchForm.date || !this.searchForm.locId) {
@@ -610,20 +655,19 @@ export default {
     },
 
     onAddCount() {
-      if(this.form.countData.length < 1) { // todo 后期删除 
-        this.form.countData.push({
-          edit: true,
-          id: "",
-          countConfirm: "",
-          countRecover: "0",
-          countDead: "0",
-          countSourceText: "",
-          countSourceUrl: "",
-          locName: ""
-        })
-      } else {
-        this.$message.warning("目前只能添加一条统计信息")
+      if(!this.checkDateRegion(this.searchForm)) {
+        return false
       }
+      this.form.countData.push({
+        edit: true,
+        id: "",
+        countConfirm: "",
+        countRecover: "0",
+        countDead: "0",
+        countSourceText: "",
+        countSourceUrl: "",
+        locName: ""
+      })
     },
     onEditCount(row) {
       row.edit = true
@@ -642,7 +686,7 @@ export default {
         return false
       }
       var count = {
-        countRegionId: this.form.region[this.form.region.length - 1],
+        countRegionId: row.locId,
         countDate: new Date(this.form.date).Format("yyyy-MM-dd"),
         countConfirm: row.countConfirm,
         countRecover: row.countRecover,
@@ -706,6 +750,9 @@ export default {
 
     // 添加/确认/编辑/删除 表单里的病例栏
     onAddPat() {
+      if(!this.checkDateRegion(this.searchForm)) {
+        return false
+      }
       this.formPat.patData.push({
         edit: true,
         id: "",
@@ -722,9 +769,10 @@ export default {
         return false
       }
       var pat = {
-        sampleRegionId: this.form.region[
-          this.form.region.length - 1
-        ],
+        // sampleRegionId: this.form.region[
+        //   this.form.region.length - 1
+        // ],
+        sampleRegionId: row.locId,
         sampleSex: row.sampleSex,
         sampleAge: row.sampleAge,
         sampleDate: new Date().Format(
@@ -812,6 +860,7 @@ export default {
     checkPat(pat) {
       var isEmpty = this.isEmpty
       if (
+        isEmpty(pat.locId) ||
         isEmpty(pat.sampleSex) ||
         isEmpty(pat.sampleAge) ||
         isEmpty(pat.sampleSourceText) ||
@@ -825,6 +874,7 @@ export default {
     checkCount(count) {
       var isEmpty = this.isEmpty
       if (
+        isEmpty(count.locId) ||
         isEmpty(count.countConfirm) ||
         isEmpty(count.countRecover) ||
         isEmpty(count.countDead) ||
@@ -866,7 +916,7 @@ export default {
           this.formPat.patData.length === 0 &&
           this.form.countData.length === 0
         ) {
-          this.hasData = false
+          this.disableSearch = false
         }
       },
       deep: true
@@ -877,11 +927,16 @@ export default {
           this.formPat.patData.length === 0 &&
           this.form.countData.length === 0
         ) {
-          this.hasData = false
+          this.disableSearch = false
         }
       },
       deep: true
-    }
+    },
+    // searchForm: {
+    //   handler: function() {
+    //   },
+    //   deep: true
+    // }
   },
   mounted() {
     (function() {
