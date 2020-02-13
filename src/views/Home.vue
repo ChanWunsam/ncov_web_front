@@ -697,7 +697,7 @@ export default {
       }
     },
     onDelCount(row, index) {
-      this.$confirm("确认删除统计？")
+      this.$confirm("将同时删除对应的所有病例，确认删除统计？")
         .then(() => {
           deleteCount(row.id).then((res) => {
             if(res.status == 0) {
