@@ -686,7 +686,7 @@ export default {
         return false
       }
       var count = {
-        countRegionId: row.locId,
+        countRegionId: row.locId[row.locId.length - 1],
         countDate: new Date(this.form.date).Format("yyyy-MM-dd"),
         countConfirm: row.countConfirm,
         countRecover: row.countRecover,
@@ -772,7 +772,7 @@ export default {
         // sampleRegionId: this.form.region[
         //   this.form.region.length - 1
         // ],
-        sampleRegionId: row.locId,
+        sampleRegionId: row.locId[row.locId.length - 1],
         sampleSex: row.sampleSex,
         sampleAge: row.sampleAge,
         sampleDate: new Date().Format(
