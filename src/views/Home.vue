@@ -187,7 +187,7 @@
       </el-form>
     </div>
     <el-button type="primary" @click="onAddCount" style="margin: 10px">添加统计</el-button> 
-    <!-- <el-button type="success" @click="onSaveAllCounts" style="margin-top: 10px">保存所有统计</el-button> -->
+    <el-button type="success" @click="onSaveAllCounts" style="margin-top: 10px">保存所有统计</el-button>
     
     <p 
       class="title" 
@@ -496,6 +496,7 @@ export default {
                                 res.Counts : [res.Counts]
           this.form.countData.forEach((item, index) => {
             item.edit = false
+            item.locId = item.countRegionId
           })
           this.disableSearch = true
           // this.isInit = false
@@ -524,6 +525,7 @@ export default {
           this.formPat.patData = res.Patients
           this.formPat.patData.forEach((item, index) => {
             item.edit = false
+            item.locId = item.sampleRegionId
           })
           this.disableSearch = true
         } else {
@@ -720,14 +722,14 @@ export default {
     onSaveAllCounts() {
       if(this.checkDateRegion(this.searchForm)) {
         var valid = true
-        this.formPat.patData.forEach((item, index) => {
+        this.form.countData.forEach((item, index) => {
           if(!this.checkCount(item)) {
             valid = false
           }
         })
         if(valid) {
           // 先检查所有的填空是否有效，再逐个保存
-          this.form.patCount.forEach((item, index) => {
+          this.form.countData.forEach((item, index) => {
             this.onSaveCount(item)
           })
         }
@@ -741,6 +743,7 @@ export default {
               this.$message.success("删除统计成功");
               this.closeMsg = true
               this.getCount(this.searchForm)
+              this.getPat(this.searchForm)
             } else {
               this.$message.error(res.desc)
             }
