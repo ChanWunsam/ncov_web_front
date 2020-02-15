@@ -133,15 +133,17 @@ export default {
     submitForm(formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          this.axios
-            .post(
-              "/api/user/register",
-              qs.stringify({
-                phone: this.ruleForm2.tel,
-                password: this.ruleForm2.pass,
-                regionId: this.ruleForm2.region
-              })
-            )
+          var url = "/api/mark/user/register"
+          var param = {
+            phone: this.ruleForm2.tel,
+            password: this.ruleForm2.pass,
+            regionId: this.ruleForm2.region
+          }
+          this.axios({
+              method: 'post',
+              url: url,
+              data: param
+            })
             .then(res => {
               if (res.data.status == 200) {
                 this.axios
@@ -186,16 +188,18 @@ export default {
   },
   mounted() {
     this.axios
-      .post("/api/info/getNextLoc?locId=" + 0, {
+      .post("/api/mark/info/getNextLoc?locId=" + 0, {
         locId: 0
       })
       .then(res => {
-        res.data.forEach(i => {
-          this.regions.push({
-            label: i.name,
-            value: i.id
+        if(res.data) {
+          res.data.forEach(i => {
+            this.regions.push({
+              label: i.name,
+              value: i.id
+            });
           });
-        });
+        }
       });
   }
 };

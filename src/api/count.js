@@ -21,9 +21,13 @@ function errorMsg(error) {
 //   })
 // }
 
-function promisePost(url, params) {
+function promisePost(url, param) {
   return new Promise(function (resolve, reject) {
-    request.post(url, params).then(res => {
+    axios({
+      method: 'post',
+      url: url,
+      data: param
+    }).then(res => {
       if (res.data.status == 0) {
         resolve(res.data)
       } else {
@@ -40,7 +44,7 @@ function promisePost(url, params) {
 function getCount(params) {
   return new Promise(function (resolve, reject) {
     request.post(
-      "/api/info/getCount", 
+      "/api/mark/info/getCount", 
       qs.stringify(params)
     ).then(res => {
       if (res.data.status == 0) {
@@ -61,8 +65,8 @@ function getCount(params) {
 }
 function getCase(params) {
   return promisePost(
-    "/api/info/getPat",
-    qs.stringify(params)
+    "/api/mark/info/getPat",
+    params
   )
 }
 
@@ -70,8 +74,8 @@ function getCase(params) {
 
 function insertCount(params) {
   return promisePost(
-    "/api/count/insert", 
-    qs.stringify(params)
+    "/api/mark/count/insert", 
+    params
   )
 }
 
@@ -79,37 +83,37 @@ function insertCount(params) {
 function insertCases(params) {
   // 这里不返回stringify
   return promisePost(
-    "/api/sample/insert", 
+    "/api/mark/sample/insert", 
     params
   )
 }
 
 function modifyCount(param) {
   return promisePost(
-    "/api/count/update", 
-    qs.stringify(param)
+    "/api/mark/count/update", 
+    param
   )
 }
 
 
 function modifyCase(param) {
   return promisePost(
-    "/api/sample/update",
-    qs.stringify(param)
+    "/api/mark/sample/update",
+    param
   )
 }
 
 function deleteCase(id) {
   return promisePost(
-    "/api/sample/delete", 
-    qs.stringify({ patId: id })
+    "/api/mark/sample/delete", 
+    { patId: id }
   )
 }
 
 function deleteCount(id) {
   return promisePost(
-    "/api/count/delete",
-    qs.stringify({ countId: id })
+    "/api/mark/count/delete",
+    { countId: id }
   )
 }
 

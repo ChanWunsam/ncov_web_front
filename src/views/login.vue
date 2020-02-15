@@ -87,14 +87,16 @@ export default {
     submitForm(formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          this.axios
-            .post(
-              "/api/user/login",
-              qs.stringify({
-                phone: this.ruleForm2.tel,
-                password: this.ruleForm2.pass
-              })
-            )
+          var url = "/api/mark/user/login"
+          var param = {
+            phone: this.ruleForm2.tel,
+            password: this.ruleForm2.pass
+          }
+          this.axios({
+              method: 'post',
+              url: url,
+              data: param
+            })
             .then(res => {
               console.log(res);
               if (res.data.status == 0) {
