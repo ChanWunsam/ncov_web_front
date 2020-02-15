@@ -100,10 +100,12 @@ export default {
             .then(res => {
               console.log(res);
               if (res.data.status == 0) {
-                localStorage.setItem("regionId", res.data.regionId);
+                localStorage.setItem("regionId", res.data.data[0].region_id);
                 localStorage.setItem("phone", this.ruleForm2.tel);
-
-                this.$router.push({ name: "home" });
+                document.cookie = "token=" + res.data.data[0].token
+                this.$router.push({
+                  path: "/"
+                });
               } else {
                 this.$message(res.data.desc);
               }

@@ -45,7 +45,7 @@ function getCount(params) {
   return new Promise(function (resolve, reject) {
     request.post(
       "/api/mark/info/getCount", 
-      qs.stringify(params)
+      params
     ).then(res => {
       if (res.data.status == 0) {
         resolve(res.data)

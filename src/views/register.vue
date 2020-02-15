@@ -193,7 +193,7 @@ export default {
       })
       .then(res => {
         if(res.data) {
-          res.data.forEach(i => {
+          res.data.data.forEach(i => {
             this.regions.push({
               label: i.name,
               value: i.id

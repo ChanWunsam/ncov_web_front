@@ -392,17 +392,17 @@ export default {
           // eslint-disable-next-line no-undef
           axios
             .post(
-              "/api/info/getNextLoc",
-              qs.stringify({
+              "/api/mark/info/getNextLoc",
+              {
                 locId:
                   level == 0
                     ? localStorage.getItem("regionId")
                     : node.data.value
-              })
+              }
             )
             .then(res => {
               var nodes = [];
-              res.data.forEach(item => {
+              res.data.data.forEach(item => {
                 nodes.push({
                   value: item.id,
                   label: item.name
@@ -426,17 +426,16 @@ export default {
           // eslint-disable-next-line no-undef
           axios
             .post(
-              "/api/info/getNextLoc",
-              qs.stringify({
+              "/api/mark/info/getNextLoc",
+              {
                 locId:
                   level == 0
                     ? locId
                     : node.data.value
-              })
-            )
-            .then(res => {
+              }
+            ).then(res => {
               var nodes = [];
-              res.data.forEach(item => {
+              res.data.data.forEach(item => {
                 nodes.push({
                   value: item.id,
                   label: item.name
@@ -492,11 +491,11 @@ export default {
     getCount(params) {
       getCount(params).then(res => {
         if (res.status === 0) {
-          if(res.Counts.length == 0) {
+          if(res.data.length == 0) {
             this.$message.success("无统计信息")
           }
-          this.form.countData = Array.isArray(res.Counts) ? 
-                                res.Counts : [res.Counts]
+          this.form.countData = Array.isArray(res.data) ? 
+                                res.data : [res.data]
           this.form.countData.forEach((item, index) => {
             item.edit = false
             item.locId = item.countRegionId
@@ -525,7 +524,7 @@ export default {
     getPat(params) {
       getCase(params).then(res => {
         if(res.status === 0) {
-          this.formPat.patData = res.Patients
+          this.formPat.patData = res.data
           this.formPat.patData.forEach((item, index) => {
             item.edit = false
             item.locId = item.sampleRegionId
@@ -791,7 +790,7 @@ export default {
         sampleSourceText: row.sampleSourceText
       }
       if(!row.id) {
-        insertCases([pat]).then((res) => {
+        insertCases(pat).then((res) => {
           if(res.status === 0) {
             this.$message.success("保存病例成功");
             row.edit = false;
@@ -823,8 +822,10 @@ export default {
     },
     onEditPat(row) {
       row.edit = true
-      this.readValue = row.sampleSex
-      row.sampleSex = String(this.readValue)
+      // this.readValue = row.sampleSex
+      // row.sampleSex = String(this.readValue)
+      // this.readValue = row.sampleAge
+      // row.sampleAge = String(this.readValue)
       this.reloadPat()
     },
     onDelPat(row, index) {
