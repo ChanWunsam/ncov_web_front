@@ -492,6 +492,9 @@ export default {
     getCount(params) {
       getCount(params).then(res => {
         if (res.status === 0) {
+          if(res.Counts.length == 0) {
+            this.$message.success("无统计信息")
+          }
           this.form.countData = Array.isArray(res.Counts) ? 
                                 res.Counts : [res.Counts]
           this.form.countData.forEach((item, index) => {
