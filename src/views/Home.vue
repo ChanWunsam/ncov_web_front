@@ -499,7 +499,7 @@ export default {
                                 res.Counts : [res.Counts]
           this.form.countData.forEach((item, index) => {
             item.edit = false
-            item.locId = item.countRegionId
+            item.locId = [item.countRegionId]
           })
           this.disableSearch = true
           // this.isInit = false
@@ -528,7 +528,7 @@ export default {
           this.formPat.patData = res.Patients
           this.formPat.patData.forEach((item, index) => {
             item.edit = false
-            item.locId = item.sampleRegionId
+            item.locId = [item.sampleRegionId]
           })
           this.disableSearch = true
         } else {
@@ -676,6 +676,7 @@ export default {
     },
     onEditCount(row) {
       row.edit = true
+      row.locId = []
       this.reloadCount()
     },
     onCancelCount(row, index) {
@@ -823,6 +824,7 @@ export default {
     },
     onEditPat(row) {
       row.edit = true
+      row.locId = []
       this.readValue = row.sampleSex
       row.sampleSex = String(this.readValue)
       this.reloadPat()
