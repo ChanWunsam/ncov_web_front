@@ -466,7 +466,7 @@ export default {
     },
     // 注：仅用于判断输入值是否符合
     isEmpty(value) {
-      if (!value && value !== 0) { // value == 0 也不是 empty
+      if ((!value || value.length === 0) && value !== 0) { // value == 0 也不是 empty
         return true;
       } else {
         return false;
