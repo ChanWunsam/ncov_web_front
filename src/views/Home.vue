@@ -145,9 +145,14 @@
               <el-form-item v-if="scope.row.edit" 
                 :prop="'countData.' + scope.$index + '.countSourceText'"
               >
-                <el-input type="textarea" v-model="scope.row.countSourceText" placeholder=""></el-input>
+                <el-input type="textarea" 
+                  v-model="scope.row.countSourceText" 
+                  placeholder=""
+                  style="font-size: xx-small"
+                >
+                </el-input>
               </el-form-item>
-              <span v-else>{{scope.row.countSourceText}}</span>
+              <span v-else style="font-size: xx-small">{{scope.row.countSourceText}}</span>
             </template>
           </el-table-column>
           <el-table-column
@@ -158,9 +163,14 @@
               <el-form-item v-if="scope.row.edit" 
                 :prop="'countData.' + scope.$index + '.countSourceUrl'"
               >
-                <el-input type="textarea" v-model="scope.row.countSourceUrl" placeholder=""></el-input>
+                <el-input type="textarea" 
+                  v-model="scope.row.countSourceUrl" 
+                  placeholder=""
+                  style="font-size: xx-small"
+                >
+                </el-input>
               </el-form-item>
-              <span v-else>{{scope.row.countSourceUrl}}</span>
+              <span v-else style="font-size: xx-small">{{scope.row.countSourceUrl}}</span>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="150">
@@ -251,9 +261,14 @@
               <el-form-item v-if="scope.row.edit" 
                 :prop="'patData.' + scope.$index + '.sampleSourceText'"
               >
-                <el-input type="textarea" v-model="scope.row.sampleSourceText" placeholder=""></el-input>
+                <el-input type="textarea" 
+                  v-model="scope.row.sampleSourceText" 
+                  placeholder=""
+                  style="font-size: xx-small"
+                >
+                </el-input>
               </el-form-item>
-              <span v-else>{{scope.row.sampleSourceText}}</span>
+              <span v-else style="font-size: xx-small">{{scope.row.sampleSourceText}}</span>
             </template>
           </el-table-column>
           <el-table-column
@@ -264,9 +279,14 @@
               <el-form-item v-if="scope.row.edit" 
                 :prop="'patData.' + scope.$index + '.sampleSourceUrl'"
               >
-                <el-input type="textarea" v-model="scope.row.sampleSourceUrl" placeholder=""></el-input>
+                <el-input type="textarea" 
+                  v-model="scope.row.sampleSourceUrl" 
+                  placeholder=""
+                  style="font-size: xx-small"
+                >
+                </el-input>
               </el-form-item>
-              <span v-else>{{scope.row.sampleSourceUrl}}</span>
+              <span v-else style="font-size: xx-small">{{scope.row.sampleSourceUrl}}</span>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="150">
@@ -307,7 +327,9 @@ import {
   modifyCount,
   modifyCase,
   deleteCase,
-  deleteCount 
+  deleteCount,
+  setCookie,
+  scrollback
 } from "@/api/count.js";
 
 export default {
@@ -491,6 +513,7 @@ export default {
       this.getPat(params)
     },
     getCount(params) {
+      setCookie("scroll", window.document.body.scrollTop)
       getCount(params).then(res => {
         if (res.status === 0) {
           if(res.Counts.length == 0) {
@@ -508,6 +531,7 @@ export default {
           this.$message.error(res.desc);
         }
         this.reloadCount()
+        scrollback()
       })
       .catch((res) => {
         this.clearData()
@@ -524,6 +548,7 @@ export default {
       });
     },
     getPat(params) {
+      setCookie("scroll", window.document.body.scrollTop)
       getCase(params).then(res => {
         if(res.status === 0) {
           this.formPat.patData = res.Patients
@@ -536,6 +561,7 @@ export default {
           this.$message.error(res.desc);
         }
         this.reloadPat()
+        scrollback()
       })
     },
     onSearch() {
@@ -727,14 +753,18 @@ export default {
     onSaveAllCounts() {
       if(this.checkDateRegion(this.searchForm)) {
         var valid = true
-        this.form.countData.forEach((item, index) => {
+        this.form.countData.filter(count => {
+          return count.edit
+        }).forEach((item, index) => {
           if(!this.checkCount(item)) {
             valid = false
           }
         })
         if(valid) {
           // 先检查所有的填空是否有效，再逐个保存
-          this.form.countData.forEach((item, index) => {
+          this.form.countData.filter(count => {
+            return count.edit
+          }).forEach((item, index) => {
             this.onSaveCount(item)
           })
         }
@@ -846,14 +876,18 @@ export default {
     onSaveAllPats() {
       if(this.checkDateRegion(this.searchForm)) {
         var valid = true
-        this.formPat.patData.forEach((item, index) => {
+        this.formPat.patData.filter(pat => {
+          return pat.edit
+        }).forEach((item, index) => {
           if(!this.checkPat(item)) {
             valid = false
           }
         })
         if(valid) {
           // 先检查所有的填空是否有效，再逐个保存
-          this.formPat.patData.forEach((item, index) => {
+          this.formPat.patData.filter(pat => {
+            return pat.edit
+          }).forEach((item, index) => {
             this.onSavePat(item)
           })
         }
