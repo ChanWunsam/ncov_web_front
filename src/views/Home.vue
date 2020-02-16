@@ -405,7 +405,8 @@ export default {
               res.data.forEach(item => {
                 nodes.push({
                   value: item.id,
-                  label: item.name
+                  label: item.name,
+                  leaf: level >= 0
                 });
               });
               resolve(nodes);
