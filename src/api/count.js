@@ -117,6 +117,34 @@ function deleteCount(id) {
   )
 }
 
+/**
+ * 提供浏览器刷新滚动条不动的功能
+ */
+function trim(strValue) {    
+  return strValue.replace(/^s*|s*$/g,"");    
+}
+
+function setCookie(sName,sValue) {    
+  document.cookie = sName + "=" + escape(sValue);    
+}  
+
+function getCookie(sName) {
+  var aCookie = document.cookie.split(";");    
+  for(var i = 0; i < aCookie.length; i++) {    
+    var aCrumb = aCookie[i].split("=");    
+    if(sName === trim(aCrumb[0])) {    
+      return unescape(aCrumb[1]);    
+    }    
+  }    
+　return null;    
+}
+    
+function scrollback() {    
+  if(getCookie("scroll") !== null) {
+    document.body.scrollTop = getCookie("scroll")
+  }    
+}    
+
 export {
   getCount,
   getCase,
@@ -125,5 +153,7 @@ export {
   modifyCount,
   modifyCase,
   deleteCase,
-  deleteCount
+  deleteCount,
+  setCookie,
+  scrollback
 }
