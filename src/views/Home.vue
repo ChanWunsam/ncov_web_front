@@ -41,6 +41,7 @@
                   type="date"
                   :disabled="disableSearch"
                   placeholder="选择日期"
+                  clearable="true"
                 >
                 </el-date-picker>
               </el-form-item>
@@ -689,14 +690,15 @@ export default {
       if(!this.checkDateRegion(this.searchForm)) {
         return false
       }
+      var last_count = this.form.countData[this.form.countData.length - 1]
       this.form.countData.push({
         edit: true,
         id: "",
-        countConfirm: "",
-        countRecover: "0",
-        countDead: "0",
-        countSourceText: "",
-        countSourceUrl: "",
+        countConfirm: last_count ? last_count.countConfirm : "",
+        countRecover: last_count ? last_count.countRecover : "0",
+        countDead: last_count ? last_count.countDead : "0",
+        countSourceText: last_count ? last_count.countSourceText : "",
+        countSourceUrl: last_count ? last_count.countSourceUrl : "",
         locName: ""
       })
     },
@@ -790,16 +792,20 @@ export default {
       if(!this.checkDateRegion(this.searchForm)) {
         return false
       }
+      var last_pat = this.formPat.patData[this.formPat.patData.length - 1]
       this.formPat.patData.push({
         edit: true,
         id: "",
-        sampleSex: "",
-        sampleAge: "",
-        sampleConfirmTime: "",
-        sampleSourceText: "",
-        sampleSourceUrl: "",
+        sampleSex: last_pat ? last_pat.sampleSex : "",
+        sampleAge: last_pat ? last_pat.sampleAge : "",
+        sampleConfirmTime: last_pat ? last_pat.sampleConfirmTime : "",
+        sampleSourceText: last_pat ? last_pat.sampleSourceText : "",
+        sampleSourceUrl: last_pat ? last_pat.sampleSourceUrl : "",
         locName: ""
       })
+      var new_pat = this.formPat.patData[this.formPat.patData.length - 1]
+      this.readValue = new_pat.sampleSex
+      new_pat.sampleSex = String(this.readValue)
     },
     onSavePat(row) {
       if(!this.checkDateRegion(this.searchForm) || !this.checkPat(row)) {
@@ -895,7 +901,7 @@ export default {
       }
     },
     checkDateRegion(form) {
-      if(!form.date || !form.locId) {
+      if(!form.locId || !form.date || form.date === "1970-01-01" || form.date === "NaN-aN-aN") {
         this.$message.warning("请填入时间和地区")
         return false
       }
