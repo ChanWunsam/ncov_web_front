@@ -410,6 +410,7 @@ export default {
       props: {
         lazy: true,
         checkStrictly: true,
+        expandTrigger: 'hover',
         lazyLoad(node, resolve) {
           var { level } = node;
           // eslint-disable-next-line no-undef
@@ -439,6 +440,7 @@ export default {
       subRegions: {
         lazy: true,
         checkStrictly: true,
+        expandTrigger: 'hover',
         lazyLoad(node, resolve) {
           // if(!checkDateRegion(window.vue.$data.searchForm)) {
           if(!window.vue.$data.searchForm.date || !window.vue.$data.searchForm.locId) {
