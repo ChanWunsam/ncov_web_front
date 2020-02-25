@@ -156,7 +156,7 @@
               <span v-else style="font-size: xx-small">{{scope.row.countSourceUrl}}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="150">
+          <el-table-column label="操作" width="100">
             <template slot-scope="scope">
               <div v-if="scope.row.edit">
                 <el-button type="success" size="mini" @click="onSaveCount(scope.row)">
@@ -170,7 +170,7 @@
                 <el-button type="primary" size="mini" @click="onEditCount(scope.row)">
                   <span>编辑</span>
                 </el-button>
-                <el-button type="danger" size="mini" @click="onDelCount(scope.row, scope.$index)">
+                <el-button type="danger" size="mini" @click="onDelCount(scope.row)">
                   <span>删除</span>
                 </el-button>
               </div>
@@ -209,7 +209,7 @@
               <span v-else>{{scope.row.locName}}</span>
             </template>
           </el-table-column>
-          <el-table-column property="sampleAge" label="年龄" width="150">
+          <el-table-column property="sampleAge" label="年龄" width="100">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit" 
                 :prop="'patData.' + scope.$index + '.sampleAge'"
@@ -219,7 +219,7 @@
               <span v-else>{{scope.row.sampleAge}}</span>
             </template>
           </el-table-column>
-          <el-table-column property="sampleSex" label="性别" width="150">
+          <el-table-column property="sampleSex" label="性别" width="100">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit" 
                 :prop="'patData.' + scope.$index + '.sampleSex'" 
@@ -271,7 +271,64 @@
               <span v-else style="font-size: xx-small">{{scope.row.sampleSourceUrl}}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="150">
+          <el-table-column property="sampleCustomTag" label="自定义标签" width="100">
+            <template slot-scope="scope">
+              <el-form-item v-if="scope.row.edit" 
+                :prop="'patData.' + scope.$index + '.sampleCustomTag'" 
+              >
+                <el-tag
+                  v-for="tag in scope.row.sampleCustomTag"
+                  :key="tag.key"
+                  @close="onDelPatTag(scope.row, tag)"
+                  size="small"
+                  closable
+                >
+                  {{tag.key}}:{{tag.value}}
+                </el-tag>
+                <el-button class="button-new-tag" size="small" 
+                  @click="scope.row.dialogVisible=true"
+                >+ New Tag</el-button>
+              </el-form-item>
+              <span v-else>
+                <span v-if="scope.row.sampleCustomTag.length > 0">
+                  <el-tag
+                    v-for="tag in scope.row.sampleCustomTag"
+                    :key="tag.key"
+                    size="small"
+                  >
+                    {{tag.key}}:{{tag.value}}
+                  </el-tag>
+                </span>
+              </span>
+              <el-dialog
+                title="New Tag"
+                :visible.sync="scope.row.dialogVisible"
+                v-on:close="onCloseTagDialog(scope.row)"
+                width="30%"
+              >
+                <el-form-item 
+                  :prop="'patData.' + scope.$index + '.newTag.key'"
+                >
+                  <el-input v-model="scope.row.newTag.key"
+                    placeholder="标签名"
+                  ></el-input>
+                </el-form-item>
+                <el-form-item 
+                  :prop="'patData.' + scope.$index + '.newTag.key'"
+                  style="margin-top: 20px!important"
+                >
+                  <el-input v-model="scope.row.newTag.value"
+                    placeholder="标签值"
+                  ></el-input>
+                </el-form-item>
+                <span slot="footer" class="dialog-footer">
+                  <el-button @click="onCancelPatTag(scope.row)" style="margin-right: 10px">取 消</el-button>
+                  <el-button type="primary" @click="onAddPatTag(scope.row)">确 定</el-button>
+                </span>
+              </el-dialog>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="100">
             <template slot-scope="scope">
               <div v-if="scope.row.edit">
                 <el-button type="success" size="mini" @click="onSavePat(scope.row)">
@@ -285,7 +342,7 @@
                 <el-button type="primary" size="mini" @click="onEditPat(scope.row)">
                   <span>编辑</span>
                 </el-button>
-                <el-button type="danger" size="mini" @click="onDelPat(scope.row, scope.$index)">
+                <el-button type="danger" size="mini" @click="onDelPat(scope.row)">
                   <span>删除</span>
                 </el-button>
               </div>
@@ -296,11 +353,12 @@
     </div>
     <el-button type="primary" @click="onAddPat" style="margin-top: 10px">添加病例</el-button> 
     <el-button type="success" @click="onSaveAllPats" style="margin-top: 10px">保存所有病例</el-button>
+
   </div>
 </template>
 
 <script>
-import qs from "query-string";
+// import qs from "query-string";
 import { 
   getNextLoc,
   getCount, 
@@ -344,6 +402,7 @@ export default {
       readValue: "", // 用于解决selcet框回显value的bug
       closeMsg: false, // 用于关掉删除统计信息后的无查询结果
       disableSearch: false, // 点击确认按钮后，是否有疫情数据，无的话显示提交按钮，反之则无
+      dialogVisible: false,
 
       form: {
         // 当前region所管辖的所有区域
@@ -422,16 +481,24 @@ export default {
   },
 
   methods: {
+    setScroll() {
+      var scroll = document.documentElement.scrollTop;
+      setLS("scroll", scroll)
+    },
     reloadCount () {
+      this.setScroll()
       this.isFormAlive = false
       this.$nextTick(function() {
         this.isFormAlive = true
+        scrollback()
       })
     },
     reloadPat () {
+      this.setScroll()
       this.isFormPatAlive = false
       this.$nextTick(function() {
         this.isFormPatAlive = true
+        scrollback()
       })
     },
     // 注：仅用于判断输入值是否符合
@@ -452,7 +519,7 @@ export default {
       this.getPat()
     },
     getCount() {
-      setLS("scroll", window.document.body.scrollTop)
+      this.setScroll()
       getCount(this.searchParam).then(res => {
         if (res.status === 0) {
           if(res.data.length == 0) {
@@ -460,7 +527,7 @@ export default {
           }
           this.form.countData = Array.isArray(res.data) ? 
                                 res.data : [res.data]
-          this.form.countData.forEach((item, index) => {
+          this.form.countData.forEach((item) => {
             item.edit = false
             item.locId = item.countRegionId
           })
@@ -486,14 +553,28 @@ export default {
       });
     },
     getPat() {
-      setLS("scroll", window.document.body.scrollTop)
+      this.setScroll()
       getCase(this.searchParam).then(res => {
         if(res.status === 0) {
-          this.formPat.patData = res.data
-          this.formPat.patData.forEach((item, index) => {
-            item.edit = false
-            item.locId = item.sampleRegionId
-          })
+          this.formPat.patData = []
+          for(var i = 0; i < res.data.length; i++) {
+            this.formPat.patData.push({
+              edit: false,
+              dialogVisible: false,
+              id: res.data[i].id,
+              sampleSex: res.data[i].sampleSex,
+              sampleAge: res.data[i].sampleAge,
+              sampleConfirmTime: res.data[i].sampleConfirmTime,
+              sampleSourceText: res.data[i].sampleSourceText,
+              sampleSourceUrl: res.data[i].sampleSourceUrl,
+              sampleCustomTag: res.data[i].sampleCustomTag,
+              locName: res.data[i].locName,
+              newTag: {
+                key: "",
+                value: ""
+              }
+            })
+          }
           this.disableSearch = true
         } else {
           this.$message.error(res.desc);
@@ -584,7 +665,7 @@ export default {
         var valid = true
         this.form.countData.filter(count => {
           return count.edit
-        }).forEach((item, index) => {
+        }).forEach((item) => {
           if(!this.checkCount(item)) {
             valid = false
           }
@@ -593,13 +674,13 @@ export default {
           // 先检查所有的填空是否有效，再逐个保存
           this.form.countData.filter(count => {
             return count.edit
-          }).forEach((item, index) => {
+          }).forEach((item) => {
             this.onSaveCount(item)
           })
         }
       }
     },
-    onDelCount(row, index) {
+    onDelCount(row) {
       this.$confirm("将同时删除对应的所有病例，确认删除统计？")
         .then(() => {
           deleteCount(row.id).then((res) => {
@@ -622,13 +703,19 @@ export default {
       var last_pat = this.formPat.patData[this.formPat.patData.length - 1]
       this.formPat.patData.push({
         edit: true,
+        dialogVisible: false,
         id: "",
         sampleSex: last_pat ? last_pat.sampleSex : "",
         sampleAge: last_pat ? last_pat.sampleAge : "",
         sampleConfirmTime: last_pat ? last_pat.sampleConfirmTime : "",
         sampleSourceText: last_pat ? last_pat.sampleSourceText : "",
         sampleSourceUrl: last_pat ? last_pat.sampleSourceUrl : "",
-        locName: ""
+        sampleCustomTag: [],
+        locName: "",
+        newTag: {
+          key: "",
+          value: ""
+        }
       })
       var new_pat = this.formPat.patData[this.formPat.patData.length - 1]
       this.readValue = new_pat.sampleSex
@@ -649,7 +736,8 @@ export default {
           "yyyy-MM-dd"
         ),
         sampleSourceUrl: row.sampleSourceUrl,
-        sampleSourceText: row.sampleSourceText
+        sampleSourceText: row.sampleSourceText,
+        sampleCustomTag: row.sampleCustomTag,
       }
       if(!row.id) {
         insertCases(pat).then((res) => {
@@ -687,7 +775,7 @@ export default {
       row.locId = []
       this.reloadPat()
     },
-    onDelPat(row, index) {
+    onDelPat(row) {
       this.$confirm("确认删除病例？")
         .then(() => {
           deleteCase(row.id).then((res) => {
@@ -705,7 +793,7 @@ export default {
         var valid = true
         this.formPat.patData.filter(pat => {
           return pat.edit
-        }).forEach((item, index) => {
+        }).forEach((item) => {
           if(!this.checkPat(item)) {
             valid = false
           }
@@ -714,12 +802,46 @@ export default {
           // 先检查所有的填空是否有效，再逐个保存
           this.formPat.patData.filter(pat => {
             return pat.edit
-          }).forEach((item, index) => {
+          }).forEach((item) => {
             this.onSavePat(item)
           })
         }
       }
     },
+    onAddPatTag(row) {
+      if(row.newTag.key.length > 10 || row.newTag.value.length > 10) {
+        this.$message.warning("标签各栏的输入不能超过10个单位长度")
+        return false;
+      }
+      if(row.newTag.key.length === 0 || row.newTag.value.length === 0) {
+        this.$message.warning("标签各栏的输入不能为空")
+        return false;
+      }
+      row.sampleCustomTag.push(row.newTag);
+      row.newTag = {
+        key: "",
+        value: ""
+      }
+      row.dialogVisible = false
+      this.reloadPat();
+    },
+    onDelPatTag(row, tag) {
+      row.sampleCustomTag.splice(
+        row.sampleCustomTag.indexOf(tag),
+        1
+      );
+      this.reloadPat();
+    },
+    onCancelPatTag(row) {
+      row.dialogVisible = false
+    },
+    onCloseTagDialog(row) {
+      row.newTag = {
+        key: "",
+        value: ""
+      }
+    },
+
     checkSearchParam() {
       var param = this.searchParam
       if(!param.locId || !param.date || param.date === "1970-01-01" || param.date === "NaN-aN-aN") {
@@ -780,10 +902,6 @@ export default {
     },
     form: {
       handler: function() {
-        // this.searchForm = {
-        //   locId: String(this.form.region),
-        //   date: new Date(this.form.date).Format("yyyy-MM-dd")
-        // };
         if(
           this.formPat.patData.length === 0 &&
           this.form.countData.length === 0
@@ -976,10 +1094,24 @@ export default {
 #formData >>> .el-form-item__content {
   margin: 0px!important;
 }
+#formData >>> .el-button+.el-button {
+  margin-top: 10px;
+  margin-left: 0px;
+}
 #nowData >>> .el-form-item {
   margin: 0px!important;
 }
 #nowData >>> .el-form-item__content {
   margin: 0px!important;
+}
+#nowData >>> .el-button+.el-button {
+  margin-top: 10px;
+  margin-left: 0px;
+}
+#nowData >>> .el-tag {
+  height: auto;
+  width: auto;
+  max-width: 90px;
+  white-space: normal;
 }
 </style>

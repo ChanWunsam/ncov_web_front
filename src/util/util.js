@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import qs from "query-string"
+// import qs from "query-string"
 import {
   Message
 } from 'element-ui'
@@ -23,11 +23,10 @@ function errorMsg(error) {
 
 function promisePost(url, param) {
   return new Promise(function (resolve, reject) {
-    axios({
-      method: 'post',
-      url: url,
-      data: param
-    }).then(res => {
+    request.post(
+      url, 
+      param
+    ).then(res => {
       if (res.data.status == 0) {
         resolve(res.data)
       } else {
@@ -49,26 +48,30 @@ function getNextLoc(param) {
 }
 
 function getCount(param) {
-  return new Promise(function (resolve, reject) {
-    request.post(
-      "/api/mark/info/getCount", 
-      param
-    ).then(res => {
-      if (res.data.status == 0) {
-        resolve(res.data)
-      } 
-      else if(res.data.status === 602) {
-        reject(res.data) // 无查询结果特殊处理
-      } 
-      else {
-        errorMsg(res.data.desc)
-        reject(res.data)
-      }
-    }).catch(err => {
-      errorMsg(err)
-      reject(err)
-    })
-  })
+  return promisePost(
+    "/api/mark/info/getCount", 
+    param
+  )
+  // return new Promise(function (resolve, reject) {
+  //   request.post(
+  //     "/api/mark/info/getCount", 
+  //     param
+  //   ).then(res => {
+  //     if (res.data.status == 0) {
+  //       resolve(res.data)
+  //     } 
+  //     else if(res.data.status === 602) {
+  //       reject(res.data) // 无查询结果特殊处理
+  //     } 
+  //     else {
+  //       errorMsg(res.data.desc)
+  //       reject(res.data)
+  //     }
+  //   }).catch(err => {
+  //     errorMsg(err)
+  //     reject(err)
+  //   })
+  // })
 }
 function getCase(param) {
   return promisePost(
@@ -147,12 +150,14 @@ function setLS(sName,sValue) {
 }  
 
 function getLS(sName) {
-　return unescape(localStorage.getItem(sName));
+  return unescape(localStorage.getItem(sName));
 }
     
 function scrollback() {    
-  if(getLS("scroll") !== null) {
-    document.body.scrollTop = getLS("scroll")
+  var scroll = getLS("scroll")
+  if(scroll !== null) {
+    window.document.documentElement.scrollTop = Number(scroll)
+    // window.document.body.scrollTop = Number(scroll)
   }    
 }    
 
