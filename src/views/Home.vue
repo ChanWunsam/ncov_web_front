@@ -1,8 +1,5 @@
 <template>
   <div class="home" style="margin-bottom: 40px">
-    <!-- <p class="title">
-      <span>数据录入</span>
-    </p> -->
     <el-tooltip
       class="item"
       effect="dark"
@@ -21,27 +18,31 @@
         <el-container>
           <el-main>
             <el-form
-              ref="form"
-              :model="form"
+              ref="searchForm"
+              :model="searchForm"
               label-width="100px"
               :rules="rules"
             >
-              <el-form-item label="地区" prop="region">
-                <el-cascader
-                  :props="props"
+              <el-form-item label="地区" prop="inputRegion">
+                <el-select v-model="searchForm.inputRegion" placeholder="选择地区" 
                   :disabled="disableSearch"
-                  v-model="form.region"
                   id="region"
-                  clearable
-                ></el-cascader>
+                >
+                  <el-option
+                    v-for="(item, index) in regions"
+                    :key="index"
+                    :label="item.label"
+                    :value="item.value"
+                  ></el-option>
+                </el-select>
               </el-form-item>
-              <el-form-item label="日期" prop="date">
+              <el-form-item label="日期" prop="inputDate">
                 <el-date-picker
-                  v-model="form.date"
+                  v-model="searchForm.inputDate"
                   type="date"
                   :disabled="disableSearch"
                   placeholder="选择日期"
-                  clearable="true"
+                  clearable
                 >
                 </el-date-picker>
               </el-form-item>
@@ -56,24 +57,6 @@
       type="primary"
       @click="onSearch"
     > 查询 </el-button>
-    <!-- <el-button
-      v-show="!disableSearch"
-      type="primary"
-      @click="onSubmit"
-      :disabled="disabledBtn"
-    >查询/提交</el-button> -->
-    <!-- <el-button
-      v-show="disableSearch"
-      type="warning"
-      @click="onModify"
-      :disabled="disabledBtn"
-    >修改</el-button> -->
-    <!-- <el-button
-      v-show="disableSearch"
-      type="danger"
-      @click="onDelete"
-      :disabled="disabledBtn"
-    >删除</el-button> -->
     <el-button
       type="default"
       @click="onReturn"
@@ -98,7 +81,6 @@
           <el-table-column property="locName" label="地区" width="150">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit">
-                <!-- {{ scope.row.locName ? scope.row.locName : regionName }} -->
                 <el-cascader
                   :props="subRegions"
                   v-model = "scope.row.locId"
@@ -218,7 +200,6 @@
           <el-table-column property="locName" label="地区" width="150">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit">
-                <!-- {{ scope.row.locName ? scope.row.locName : regionName }} -->
                 <el-cascader
                   :props="subRegions"
                   v-model = "scope.row.locId"
@@ -321,6 +302,7 @@
 <script>
 import qs from "query-string";
 import { 
+  getNextLoc,
   getCount, 
   getCase,
   insertCount,
@@ -329,9 +311,9 @@ import {
   modifyCase,
   deleteCase,
   deleteCount,
-  setCookie,
+  setLS,
   scrollback
-} from "@/api/count.js";
+} from "@/util/util.js";
 
 export default {
   name: "home",
@@ -361,15 +343,9 @@ export default {
       disabledBtn: false,
       readValue: "", // 用于解决selcet框回显value的bug
       closeMsg: false, // 用于关掉删除统计信息后的无查询结果
-      // todo isInit没有使用，但暂时不删掉
-      // isInit: true, // 页面初始化时，只显示地区、时间两个框和确认按钮（只有页面初始化时才可修改地区、时间）
       disableSearch: false, // 点击确认按钮后，是否有疫情数据，无的话显示提交按钮，反之则无
 
-      regionId: localStorage.getItem("regionId"),
-      regionName: "",
       form: {
-        region: "",
-        date: "",
         // 当前region所管辖的所有区域
         countData: []
         // {
@@ -381,8 +357,12 @@ export default {
         // }
       },
       searchForm: {
+        inputDate: "",
+        inputRegion: "",
+      },
+      searchParam: {
+        locId: "",
         date: "",
-        region: ""
       },
       formPat: {
         patData: []
@@ -407,69 +387,35 @@ export default {
         number3: [{ validator: checkInteger, trigger: "blur" }],
         region: [{ required: true, message: "不能为空", trigger: "blur" }]
       },
-      props: {
-        lazy: true,
-        checkStrictly: true,
-        expandTrigger: 'hover',
-        lazyLoad(node, resolve) {
-          var { level } = node;
-          // eslint-disable-next-line no-undef
-          axios
-            .post(
-              "/api/mark/info/getNextLoc",
-              {
-                locId:
-                  level == 0
-                    ? localStorage.getItem("regionId")
-                    : node.data.value
-              }
-            )
-            .then(res => {
-              var nodes = [];
-              res.data.data.forEach(item => {
-                nodes.push({
-                  value: item.id,
-                  label: item.name,
-                  leaf: level >= 0
-                });
-              });
-              resolve(nodes);
-            });
-        }
-      },
+      regions: [],
       subRegions: {
         lazy: true,
         checkStrictly: true,
         expandTrigger: 'hover',
         lazyLoad(node, resolve) {
-          // if(!checkDateRegion(window.vue.$data.searchForm)) {
-          if(!window.vue.$data.searchForm.date || !window.vue.$data.searchForm.locId) {
+          if(!window.vue.$data.searchParam.date || !window.vue.$data.searchParam.locId) {
             this.$message.warning("请填入时间和地区")
             return false
           }
           var { level } = node;
-          var locId = window.vue.$data.searchForm.locId // this获取不到。。。只能hack写法了，而且必须锁定查询框
+          var locId = window.vue.$data.searchParam.locId // this获取不到，只能 hack写法
           // eslint-disable-next-line no-undef
-          axios
-            .post(
-              "/api/mark/info/getNextLoc",
-              {
-                locId:
-                  level == 0
-                    ? locId
-                    : node.data.value
-              }
-            ).then(res => {
-              var nodes = [];
-              res.data.data.forEach(item => {
-                nodes.push({
-                  value: item.id,
-                  label: item.name
-                });
+          getNextLoc({
+            locId:
+              level == 0
+                ? locId
+                : node.data.value,
+          }).then(res => {
+            var nodes = [];
+            res.data.forEach(item => {
+              nodes.push({
+                value: item.id,
+                label: item.name
               });
-              window.vue.$data.disableSearch = true
-              resolve(nodes);
             });
+            window.vue.$data.disableSearch = true
+            resolve(nodes);
+          });
         }
       },
     };
@@ -490,33 +436,24 @@ export default {
     },
     // 注：仅用于判断输入值是否符合
     isEmpty(value) {
-      if ((!value || value.length === 0) && value !== 0) { // value == 0 也不是 empty
+      if ((!value || (Array.isArray(value) && value.length === 0)) && value !== 0) { // value == 0 也不是 empty
         return true;
       } else {
         return false;
       }
     },
     clearData() {
-      this.form = {
-        region: this.form.region,
-        date: this.form.date,
-        countData: []
-        // number1: null, // 确诊
-        // number2: null, // 康复
-        // number3: null, // 死亡
-        // text: null,
-        // url: null
-      },
+      this.form.countData = []
       this.formPat.patData = [];
-      this.searchForm = {}
+      // this.searchParam = {}
     },
-    getData(params) {
-      this.getCount(params)
-      this.getPat(params)
+    getAll() {
+      this.getCount()
+      this.getPat()
     },
-    getCount(params) {
-      setCookie("scroll", window.document.body.scrollTop)
-      getCount(params).then(res => {
+    getCount() {
+      setLS("scroll", window.document.body.scrollTop)
+      getCount(this.searchParam).then(res => {
         if (res.status === 0) {
           if(res.data.length == 0) {
             this.$message.success("无统计信息")
@@ -525,10 +462,9 @@ export default {
                                 res.data : [res.data]
           this.form.countData.forEach((item, index) => {
             item.edit = false
-            item.locId = [item.countRegionId]
+            item.locId = item.countRegionId
           })
           this.disableSearch = true
-          // this.isInit = false
         } else {
           this.$message.error(res.desc);
         }
@@ -549,14 +485,14 @@ export default {
         this.disabledBtn = false;
       });
     },
-    getPat(params) {
-      setCookie("scroll", window.document.body.scrollTop)
-      getCase(params).then(res => {
+    getPat() {
+      setLS("scroll", window.document.body.scrollTop)
+      getCase(this.searchParam).then(res => {
         if(res.status === 0) {
           this.formPat.patData = res.data
           this.formPat.patData.forEach((item, index) => {
             item.edit = false
-            item.locId = [item.sampleRegionId]
+            item.locId = item.sampleRegionId
           })
           this.disableSearch = true
         } else {
@@ -567,129 +503,19 @@ export default {
       })
     },
     onSearch() {
-      // this.isInit = false
-      this.searchForm = {
-        locId: this.form.region[this.form.region.length - 1],
-        date: new Date(this.form.date).Format("yyyy-MM-dd")
-      };
-      if(this.checkDateRegion(this.searchForm)) {
-        this.getData(this.searchForm)
+      this.searchParam.locId = Number(this.searchForm.inputRegion);
+      this.searchParam.date = new Date(this.searchForm.inputDate).Format("yyyy-MM-dd")
+      if(this.checkSearchParam()) {
+        this.getAll()
       }
     },
     onReturn() {
       this.clearData()
-      // this.isInit = true
       this.disableSearch = false
-    },
-    onSubmit() {
-      // if(!this.searchForm.date || !this.searchForm.locId) {
-      //   this.$message.warning("请填入时间和地区")
-      //   return false
-      // }
-      // this.disabledBtn = true;
-      // var isEmpty = this.isEmpty;
-      // var params_count = {
-      //   countRegionId: this.form.region[this.form.region.length - 1],
-      //   countDate: new Date(this.form.date).Format("yyyy-MM-dd"),
-      //   countConfirm: this.form.countData.countConfirm,
-      //   countRecover: this.form.countData.countRecover,
-      //   countDead: this.form.countData.countDead,
-      //   countSourceUrl: this.form.countData.countSourceUrl,
-      //   countSourceText: this.form.countData.countSourceText,
-      // };
-      // this.$refs["form"].validate(valid => {
-      //   if (valid) {
-      //     // 如果都为空，执行查询操作；如果有一项不为空，执行提交操作
-      //     if (isEmpty(params_count.countConfirm) &&
-      //       isEmpty(params_count.countRecover) &&
-      //       isEmpty(params_count.countDead) &&
-      //       isEmpty(params_count.countSourceText) &&
-      //       isEmpty(params_count.countSourceUrl)
-      //     ) {
-      //       if(!this.checkDateRegion(this.searchForm)) {
-      //         this.disabledBtn = false;
-      //         return false
-      //       }
-      //       this.searchForm = {
-      //         locId: this.form.region[this.form.region.length - 1],
-      //         date: new Date(this.form.date).Format("yyyy-MM-dd")
-      //       };
-      //       this.getData(this.searchForm)
-      //     } else {
-      //       // 检查输入数据是否都有效
-      //       if(!this.checkDateRegion(this.searchForm) || !this.checkCount(params_count)) {
-      //         this.disabledBtn = false;
-      //         return false
-      //       }
-      //       insertCount(params_count)
-      //         .then(res => {
-      //           if(res.status === 0) {
-      //             this.$message.success("提交成功");
-      //             this.onReturn()
-      //           } else {
-      //             this.$message.error(res.desc)
-      //           }
-      //         })
-      //         .finally(() => {
-      //           this.disabledBtn = false;
-      //         });
-      //     }
-      //   } else {
-      //     this.disabledBtn = false;
-      //   }
-      // });
-    },
-    onModify() { 
-      // this.$confirm("确认修改？")
-      //   .then(() => {
-      //     this.disabledBtn = true;
-      //     var param = {
-      //       id: this.form.id,
-      //       countRegionId: this.form.region[this.form.region.length - 1],
-      //       countDate: new Date(this.form.date).Format("yyyy-MM-dd"),
-      //       countConfirm: this.form.countData.countConfirm,
-      //       countRecover: this.form.countData.countRecover,
-      //       countDead: this.form.countData.countDead,
-      //       countSourceUrl: this.form.countData.countSourceUrl,
-      //       countSourceText: this.form.countData.countSourceText,
-      //     };
-      //     if(!this.checkDateRegion(this.searchForm) || !this.checkCount(param)) {
-      //       this.disabledBtn = false;
-      //       return false
-      //     }
-      //     modifyCount(param).then(res => {
-      //       if(res.status == 0) {
-      //         this.$message.success("修改成功")
-      //         this.onReturn()
-      //       } else {
-      //         this.$message.error(res.desc)
-      //       }
-      //     })
-      //     .finally(() => {
-      //       this.disabledBtn = false;
-      //     });
-      //   })
-    }, 
-    onDelete() { 
-      // this.$confirm("将同时删除所有病例，确认删除？") // 确认删除该信息及所有病例
-      //   .then(() => {
-      //     this.disabledBtn = true;
-      //     deleteCount(this.form.id).then((res) => {
-      //       if(res.status == 0) {
-      //         this.$message.success("删除成功")
-      //         this.onReturn()
-      //       } else {
-      //         this.$message.error(res.desc)
-      //       }
-      //     })
-      //     .finally(() => {
-      //       this.disabledBtn = false;
-      //     });
-      //   }).catch(() => {});
     },
 
     onAddCount() {
-      if(!this.checkDateRegion(this.searchForm)) {
+      if(!this.checkSearchParam()) {
         return false
       }
       var last_count = this.form.countData[this.form.countData.length - 1]
@@ -714,16 +540,16 @@ export default {
         this.form.countData.splice(index, 1);
       } else {
         row.edit = false
-        this.getCount(this.searchForm)
+        this.getCount()
       }
     },
     onSaveCount(row) {
-      if(!this.checkDateRegion(this.searchForm) || !this.checkCount(row)) {
+      if(!this.checkSearchParam() || !this.checkCount(row)) {
         return false
       }
       var count = {
         countRegionId: row.locId[row.locId.length - 1],
-        countDate: new Date(this.form.date).Format("yyyy-MM-dd"),
+        countDate: new Date(this.searchParam.date).Format("yyyy-MM-dd"),
         countConfirm: row.countConfirm,
         countRecover: row.countRecover,
         countDead: row.countDead,
@@ -735,7 +561,7 @@ export default {
           if(res.status === 0) {
             this.$message.success("保存统计成功");
             row.edit = false;
-            this.getCount(this.searchForm)
+            this.getCount()
           } else {
             this.$message.error(res.desc)
           }
@@ -746,7 +572,7 @@ export default {
           if(res.status === 0) {
             this.$message.success("修改统计成功");
             row.edit = false;
-            this.getCount(this.searchForm)
+            this.getCount()
           } else {
             this.$message.error(res.desc)
           }
@@ -754,7 +580,7 @@ export default {
       }
     },
     onSaveAllCounts() {
-      if(this.checkDateRegion(this.searchForm)) {
+      if(this.checkSearchParam()) {
         var valid = true
         this.form.countData.filter(count => {
           return count.edit
@@ -780,8 +606,7 @@ export default {
             if(res.status == 0) {
               this.$message.success("删除统计成功");
               this.closeMsg = true
-              this.getCount(this.searchForm)
-              this.getPat(this.searchForm)
+              this.getAll()
             } else {
               this.$message.error(res.desc)
             }
@@ -791,7 +616,7 @@ export default {
 
     // 添加/确认/编辑/删除 表单里的病例栏
     onAddPat() {
-      if(!this.checkDateRegion(this.searchForm)) {
+      if(!this.checkSearchParam()) {
         return false
       }
       var last_pat = this.formPat.patData[this.formPat.patData.length - 1]
@@ -810,20 +635,17 @@ export default {
       new_pat.sampleSex = String(this.readValue)
     },
     onSavePat(row) {
-      if(!this.checkDateRegion(this.searchForm) || !this.checkPat(row)) {
+      if(!this.checkSearchParam() || !this.checkPat(row)) {
         return false
       }
       var pat = {
-        // sampleRegionId: this.form.region[
-        //   this.form.region.length - 1
-        // ],
         sampleRegionId: row.locId[row.locId.length - 1],
         sampleSex: row.sampleSex,
         sampleAge: row.sampleAge,
         sampleDate: new Date().Format(
           "yyyy-MM-dd"
         ), // 录入的时间
-        sampleConfirmTime: new Date(this.form.date).Format(
+        sampleConfirmTime: new Date(this.searchParam.date).Format(
           "yyyy-MM-dd"
         ),
         sampleSourceUrl: row.sampleSourceUrl,
@@ -834,7 +656,7 @@ export default {
           if(res.status === 0) {
             this.$message.success("保存病例成功");
             row.edit = false;
-            this.getPat(this.searchForm)
+            this.getPat()
           } else {
             this.$message.error(res.desc)
           }
@@ -845,7 +667,7 @@ export default {
           if(res.status === 0) {
             this.$message.success("修改病例成功");
             row.edit = false;
-            this.getPat(this.searchForm)
+            this.getPat()
           } else {
             this.$message.error(res.desc)
           }
@@ -857,15 +679,11 @@ export default {
         this.formPat.patData.splice(index, 1);
       } else {
         row.edit = false
-        this.getPat(this.searchForm)
+        this.getPat()
       }
     },
     onEditPat(row) {
       row.edit = true
-      // this.readValue = row.sampleSex
-      // row.sampleSex = String(this.readValue)
-      // this.readValue = row.sampleAge
-      // row.sampleAge = String(this.readValue)
       row.locId = []
       this.reloadPat()
     },
@@ -875,7 +693,7 @@ export default {
           deleteCase(row.id).then((res) => {
             if(res.status == 0) {
               this.$message.success("删除病例成功");
-              this.getPat(this.searchForm)
+              this.getPat()
             } else {
               this.$message.error(res.desc)
             }
@@ -883,7 +701,7 @@ export default {
         }).catch(() => {});
     },
     onSaveAllPats() {
-      if(this.checkDateRegion(this.searchForm)) {
+      if(this.checkSearchParam()) {
         var valid = true
         this.formPat.patData.filter(pat => {
           return pat.edit
@@ -902,8 +720,9 @@ export default {
         }
       }
     },
-    checkDateRegion(form) {
-      if(!form.locId || !form.date || form.date === "1970-01-01" || form.date === "NaN-aN-aN") {
+    checkSearchParam() {
+      var param = this.searchParam
+      if(!param.locId || !param.date || param.date === "1970-01-01" || param.date === "NaN-aN-aN") {
         this.$message.warning("请填入时间和地区")
         return false
       }
@@ -946,24 +765,25 @@ export default {
         for (var i = keys.length; i--; )
           document.cookie = keys[i] + "=0;expires=" + new Date(0).toUTCString();
       }
-      localStorage.removeItem("regionId");
+      localStorage.removeItem("regionIds");
 
       this.$router.push({ name: "login" });
     },
   },
   watch: {
+    searchForm: {
+      handler: function() {
+        this.searchParam.locId = Number(this.searchForm.inputRegion);
+        this.searchParam.date = new Date(this.searchForm.inputDate).Format("yyyy-MM-dd")
+      },
+      deep: true
+    },
     form: {
       handler: function() {
-        this.searchForm = {
-          locId: this.form.region[this.form.region.length - 1],
-          date: new Date(this.form.date).Format("yyyy-MM-dd")
-        };
-        setTimeout(() => {
-          this.regionName = document.getElementById("region")
-            .querySelectorAll(".el-input")[0]
-            .querySelectorAll("input")[0]
-            .value.split(" / ").join("-");
-        }, 300)
+        // this.searchForm = {
+        //   locId: String(this.form.region),
+        //   date: new Date(this.form.date).Format("yyyy-MM-dd")
+        // };
         if(
           this.formPat.patData.length === 0 &&
           this.form.countData.length === 0
@@ -991,6 +811,23 @@ export default {
     // }
   },
   mounted() {
+    // 查询框地址项
+    var regionIds = localStorage.getItem("regionIds").split(',')
+    for(var i = 0; i < regionIds.length; i++) {
+      getNextLoc({
+        locId: regionIds[i]
+      }).then(res => {
+        if(res) {
+          res.data.forEach(i => {
+            this.regions.push({
+              label: i.name, // todo 这里是不是加个省名
+              value: i.id
+            });
+          });
+        }
+      });
+    }
+
     (function() {
       // canvas 实现 watermark
       function __canvasWM({

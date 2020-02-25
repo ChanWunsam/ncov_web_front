@@ -34,7 +34,7 @@
               placeholder="确认密码"
             ></el-input>
           </el-form-item>
-          <el-form-item prop="region" class="code">
+          <!-- <el-form-item prop="region" class="code">
             <el-select v-model="ruleForm2.region" placeholder="请选择地区">
               <el-option
                 v-for="(item, index) in regions"
@@ -43,7 +43,7 @@
                 :value="item.value"
               ></el-option>
             </el-select>
-          </el-form-item>
+          </el-form-item> -->
           <el-form-item>
             <el-button
               type="primary"
@@ -61,6 +61,12 @@
 
 <script>
 import qs from "query-string";
+import { 
+  register,
+  login,
+  getNextLoc,
+} from "@/util/util.js";
+import gotoHome from '../views/login.vue';
 
 export default {
   name: "Register",
@@ -133,41 +139,39 @@ export default {
     submitForm(formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          var url = "/api/mark/user/register"
           var param = {
             phone: this.ruleForm2.tel,
             password: this.ruleForm2.pass,
-            regionId: this.ruleForm2.region
+            // regionId: [this.ruleForm2.region],
           }
-          this.axios({
-              method: 'post',
-              url: url,
-              data: param
-            })
-            .then(res => {
-              if (res.data.status == 200) {
-                this.axios
-                  .post(
-                    "/api/user/login",
-                    qs.stringify({
-                      phone: this.ruleForm2.tel,
-                      password: this.ruleForm2.pass
-                    })
-                  )
-                  .then(res => {
-                    if (res.data.status == 100) {
-                      localStorage.setItem("regionId", res.data.regionId);
-                      this.$router.push({ name: "home" });
-                    }
-                  });
-              } else {
-                this.$message(res.data.desc);
-              }
-            });
+          register(param).then(res => {
+            if (res.status === 0) {
+              // this.$message.success("注册成功")
+              login(param).then(res => {
+                if (res.status === 0) {
+                  var homeParam = {
+                    regionIds: res.data[0].region_id,
+                    phone: this.ruleForm2.tel,
+                    token: res.data[0].token
+                  }
+                  this.gotoHome(homeParam)
+                }
+              })
+            }
+          })
         } else {
           console.log("error submit!!");
           return false;
         }
+      });
+    },
+
+    gotoHome(param) {
+      localStorage.setItem("regionIds", param.regionIds);
+      localStorage.setItem("phone", param.phone);
+      document.cookie = "token=" + escape(param.token)
+      this.$router.push({
+        path: "/"
       });
     },
     // <!--进入登录页-->
@@ -187,20 +191,18 @@ export default {
     }
   },
   mounted() {
-    this.axios
-      .post("/api/mark/info/getNextLoc?locId=" + 0, {
-        locId: 0
-      })
-      .then(res => {
-        if(res.data) {
-          res.data.data.forEach(i => {
-            this.regions.push({
-              label: i.name,
-              value: i.id
-            });
-          });
-        }
-      });
+    // getNextLoc({
+    //   locId: 0
+    // }).then(res => {
+    //   if(res) {
+    //     res.data.forEach(i => {
+    //       this.regions.push({
+    //         label: i.name,
+    //         value: i.id
+    //       });
+    //     });
+    //   }
+    // })
   }
 };
 </script>

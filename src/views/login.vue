@@ -43,6 +43,10 @@
 
 <script>
 import qs from "query-string";
+import { 
+  register,
+  login,
+} from "@/util/util.js";
 
 export default {
   name: "Register",
@@ -87,35 +91,33 @@ export default {
     submitForm(formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          var url = "/api/mark/user/login"
           var param = {
             phone: this.ruleForm2.tel,
             password: this.ruleForm2.pass
           }
-          this.axios({
-              method: 'post',
-              url: url,
-              data: param
-            })
-            .then(res => {
-              console.log(res);
-              if (res.data.status == 0) {
-                localStorage.setItem("regionId", res.data.data[0].region_id);
-                localStorage.setItem("phone", this.ruleForm2.tel);
-                document.cookie = "token=" + res.data.data[0].token
-                this.$router.push({
-                  path: "/"
-                });
-              } else {
-                this.$message(res.data.desc);
+          login(param).then(res => {
+            if (res.status === 0) {
+              var homeParam = {
+                regionIds: res.data[0].region_id,
+                phone: this.ruleForm2.tel,
+                token: res.data[0].token
               }
-            });
+              this.gotoHome(homeParam)
+            }
+          })
         } else {
           return false;
         }
       });
     },
-    // <!--进入登录页-->
+    gotoHome(param) {
+      localStorage.setItem("regionIds", param.regionIds);
+      localStorage.setItem("phone", param.phone);
+      document.cookie = "token=" + escape(param.token)
+      this.$router.push({
+        path: "/"
+      });
+    },
     gotoRegister() {
       this.$router.push({
         path: "/register"
