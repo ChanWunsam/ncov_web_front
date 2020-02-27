@@ -53,14 +53,14 @@
     </div>
 
     <!-- 按钮组合 -->
-    <el-button
+    <!-- <el-button
       type="primary"
       @click="onSearch"
     > 查询 </el-button>
     <el-button
       type="default"
       @click="onReturn"
-    > 解锁 </el-button>
+    > 解锁 </el-button> -->
     
     <p 
       class="title" 
@@ -84,7 +84,7 @@
                 <el-cascader
                   :props="subRegions"
                   v-model = "scope.row.locId"
-                  clearable
+                  @change="onChangeRegion(scope.row)"
                 ></el-cascader>
               </el-form-item>
               <span v-else>{{scope.row.locName}}</span>
@@ -203,7 +203,7 @@
                 <el-cascader
                   :props="subRegions"
                   v-model = "scope.row.locId"
-                  clearable
+                  @change="onChangeRegion(scope.row)"
                 ></el-cascader>
               </el-form-item>
               <span v-else>{{scope.row.locName}}</span>
@@ -405,15 +405,8 @@ export default {
       dialogVisible: false,
 
       form: {
-        // 当前region所管辖的所有区域
-        countData: []
-        // {
-        //   countConfirm
-        //   countRecover
-        //   countDead
-        //   countSourceText
-        //   countSourceUrl
-        // }
+        countData: [],
+        oldCountData: []
       },
       searchForm: {
         inputDate: "",
@@ -424,16 +417,8 @@ export default {
         date: "",
       },
       formPat: {
-        patData: []
-        // {
-        //   id
-        //   sampleSex
-        //   sampleAge
-        //   sampleConfirmTime
-        //   sampleSourceText
-        //   sampleSourceUrl
-        //   locName
-        // }
+        patData: [],
+        oldPatData: []
       },
       rules: {
         sampleAge: [{ validator: checkAge, trigger: "blur" }],
@@ -447,6 +432,7 @@ export default {
         region: [{ required: true, message: "不能为空", trigger: "blur" }]
       },
       regions: [],
+      regionDicts: {},
       subRegions: {
         lazy: true,
         checkStrictly: true,
@@ -471,22 +457,25 @@ export default {
                 value: item.id,
                 label: item.name
               });
+              window.vue.$data.regionDicts[item.id] = item.name
             });
-            window.vue.$data.disableSearch = true
+            // window.vue.$data.disableSearch = true
             resolve(nodes);
           });
         }
       },
     };
   },
-
   methods: {
     setScroll() {
       var scroll = document.documentElement.scrollTop;
       setLS("scroll", scroll)
     },
+    deepCopyArr(arr) {
+      return JSON.parse(JSON.stringify(arr));
+    },
     reloadCount () {
-      this.setScroll()
+      this.setScroll()    
       this.isFormAlive = false
       this.$nextTick(function() {
         this.isFormAlive = true
@@ -519,24 +508,31 @@ export default {
       this.getPat()
     },
     getCount() {
-      this.setScroll()
       getCount(this.searchParam).then(res => {
         if (res.status === 0) {
           if(res.data.length == 0) {
             this.$message.success("无统计信息")
           }
-          this.form.countData = Array.isArray(res.data) ? 
-                                res.data : [res.data]
-          this.form.countData.forEach((item) => {
-            item.edit = false
-            item.locId = item.countRegionId
-          })
-          this.disableSearch = true
+          // 清空再逐个赋值，可以省去强制刷新
+          this.form.countData = []
+          for(var i = 0; i < res.data.length; i++) {
+            this.form.countData.push({
+              id: res.data[i].id,
+              countConfirm: res.data[i].countConfirm,
+              countRecover: res.data[i].countRecover,
+              countDead: res.data[i].countDead,
+              countSourceText: res.data[i].countSourceText,
+              countSourceUrl: res.data[i].countSourceUrl,
+              locName: res.data[i].locName.split('-').slice(2).join(' / '),
+              edit: false
+            })
+          }
+          // this.disableSearch = true
+          this.form.oldCountData = this.deepCopyArr(this.form.countData)
+          // this.reloadPat()
         } else {
           this.$message.error(res.desc);
         }
-        this.reloadCount()
-        scrollback()
       })
       .catch((res) => {
         this.clearData()
@@ -553,14 +549,11 @@ export default {
       });
     },
     getPat() {
-      this.setScroll()
       getCase(this.searchParam).then(res => {
         if(res.status === 0) {
           this.formPat.patData = []
           for(var i = 0; i < res.data.length; i++) {
             this.formPat.patData.push({
-              edit: false,
-              dialogVisible: false,
               id: res.data[i].id,
               sampleSex: res.data[i].sampleSex,
               sampleAge: res.data[i].sampleAge,
@@ -569,18 +562,20 @@ export default {
               sampleSourceUrl: res.data[i].sampleSourceUrl,
               sampleCustomTag: res.data[i].sampleCustomTag,
               locName: res.data[i].locName,
+              edit: false,
+              dialogVisible: false,
               newTag: {
                 key: "",
                 value: ""
               }
             })
           }
-          this.disableSearch = true
+          // this.disableSearch = true
+          this.formPat.oldPatData = this.deepCopyArr(this.formPat.patData)
+          // this.reloadPat()
         } else {
           this.$message.error(res.desc);
         }
-        this.reloadPat()
-        scrollback()
       })
     },
     onSearch() {
@@ -592,7 +587,7 @@ export default {
     },
     onReturn() {
       this.clearData()
-      this.disableSearch = false
+      // this.disableSearch = false
     },
 
     onAddCount() {
@@ -614,14 +609,21 @@ export default {
     onEditCount(row) {
       row.edit = true
       row.locId = []
-      this.reloadCount()
+      // this.reloadCount()
     },
     onCancelCount(row, index) {
       if(!row.id) {
         this.form.countData.splice(index, 1);
       } else {
+        // 不能直接赋值，以防干掉vue的对象跟踪
+        row.countConfirm = this.form.oldCountData[index].countConfirm
+        row.countRecover = this.form.oldCountData[index].countRecover
+        row.countDead = this.form.oldCountData[index].countDead
+        row.countSourceText = this.form.oldCountData[index].countSourceText
+        row.countSourceUrl = this.form.oldCountData[index].countSourceUrl
+        row.locName = this.form.oldCountData[index].locName
         row.edit = false
-        this.getCount()
+        // this.getCount()
       }
     },
     onSaveCount(row) {
@@ -642,7 +644,8 @@ export default {
           if(res.status === 0) {
             this.$message.success("保存统计成功");
             row.edit = false;
-            this.getCount()
+            // this.getCount()
+            this.form.oldCountData = this.deepCopyArr(this.form.countData)
           } else {
             this.$message.error(res.desc)
           }
@@ -653,7 +656,8 @@ export default {
           if(res.status === 0) {
             this.$message.success("修改统计成功");
             row.edit = false;
-            this.getCount()
+            // this.getCount()
+            this.form.oldCountData = this.deepCopyArr(this.form.countData)
           } else {
             this.$message.error(res.desc)
           }
@@ -662,21 +666,15 @@ export default {
     },
     onSaveAllCounts() {
       if(this.checkSearchParam()) {
-        var valid = true
-        this.form.countData.filter(count => {
+        var forSaved = this.form.countData.filter(count => {
           return count.edit
-        }).forEach((item) => {
-          if(!this.checkCount(item)) {
-            valid = false
-          }
         })
-        if(valid) {
-          // 先检查所有的填空是否有效，再逐个保存
-          this.form.countData.filter(count => {
-            return count.edit
-          }).forEach((item) => {
+        // 先检查所有的填空是否有效，再逐个保存
+        if(forSaved.every(this.checkCount)) {
+          forSaved.forEach((item) => {
             this.onSaveCount(item)
           })
+          this.getCount()
         }
       }
     },
@@ -693,6 +691,13 @@ export default {
             }
           })
         }).catch(() => {});
+    },
+    onChangeRegion(row) {
+      var names = []
+      row.locId.forEach(id => {
+        names.push(this.regionDicts[id])
+      })
+      row.locName = names.join(' / ')
     },
 
     // 添加/确认/编辑/删除 表单里的病例栏
@@ -717,9 +722,9 @@ export default {
           value: ""
         }
       })
-      var new_pat = this.formPat.patData[this.formPat.patData.length - 1]
-      this.readValue = new_pat.sampleSex
-      new_pat.sampleSex = String(this.readValue)
+      var newPat = this.formPat.patData[this.formPat.patData.length - 1]
+      this.readValue = newPat.sampleSex
+      newPat.sampleSex = String(this.readValue)
     },
     onSavePat(row) {
       if(!this.checkSearchParam() || !this.checkPat(row)) {
@@ -744,7 +749,8 @@ export default {
           if(res.status === 0) {
             this.$message.success("保存病例成功");
             row.edit = false;
-            this.getPat()
+            // this.getPat()
+            this.formPat.oldPatData = this.deepCopyArr(this.formPat.patData)
           } else {
             this.$message.error(res.desc)
           }
@@ -755,7 +761,8 @@ export default {
           if(res.status === 0) {
             this.$message.success("修改病例成功");
             row.edit = false;
-            this.getPat()
+            // this.getPat()
+            this.formPat.oldPatData = this.deepCopyArr(this.formPat.patData)
           } else {
             this.$message.error(res.desc)
           }
@@ -766,14 +773,21 @@ export default {
       if(!row.id) {
         this.formPat.patData.splice(index, 1);
       } else {
+        row.sampleSex = this.formPat.oldPatData[index].sampleSex
+        row.sampleAge = this.formPat.oldPatData[index].sampleAge
+        row.sampleConfirmTime = this.formPat.oldPatData[index].sampleConfirmTime
+        row.sampleSourceText = this.formPat.oldPatData[index].sampleSourceText
+        row.sampleSourceUrl = this.formPat.oldPatData[index].sampleSourceUrl
+        row.sampleCustomTag = this.formPat.oldPatData[index].sampleCustomTag
+        row.locName = this.formPat.oldPatData[index].locName
         row.edit = false
-        this.getPat()
+        // this.getPat()
       }
     },
     onEditPat(row) {
       row.edit = true
       row.locId = []
-      this.reloadPat()
+      // this.reloadPat()
     },
     onDelPat(row) {
       this.$confirm("确认删除病例？")
@@ -790,21 +804,15 @@ export default {
     },
     onSaveAllPats() {
       if(this.checkSearchParam()) {
-        var valid = true
-        this.formPat.patData.filter(pat => {
+        var forSaved = this.formPat.patData.filter(pat => {
           return pat.edit
-        }).forEach((item) => {
-          if(!this.checkPat(item)) {
-            valid = false
-          }
         })
-        if(valid) {
-          // 先检查所有的填空是否有效，再逐个保存
-          this.formPat.patData.filter(pat => {
-            return pat.edit
-          }).forEach((item) => {
+        // 先检查所有的填空是否有效，再逐个保存
+        if(forSaved.every(this.checkPat)) {
+          forSaved.forEach((item) => {
             this.onSavePat(item)
           })
+          this.getPat()
         }
       }
     },
@@ -823,14 +831,14 @@ export default {
         value: ""
       }
       row.dialogVisible = false
-      this.reloadPat();
+      // this.reloadPat()
     },
     onDelPatTag(row, tag) {
       row.sampleCustomTag.splice(
         row.sampleCustomTag.indexOf(tag),
         1
-      );
-      this.reloadPat();
+      )
+      // this.reloadPat()
     },
     onCancelPatTag(row) {
       row.dialogVisible = false
@@ -842,10 +850,12 @@ export default {
       }
     },
 
-    checkSearchParam() {
+    checkSearchParam(warning = true) {
       var param = this.searchParam
       if(!param.locId || !param.date || param.date === "1970-01-01" || param.date === "NaN-aN-aN") {
-        this.$message.warning("请填入时间和地区")
+        if(warning) {
+          this.$message.warning("请填入时间和地区")
+        }
         return false
       }
       return true
@@ -888,7 +898,6 @@ export default {
           document.cookie = keys[i] + "=0;expires=" + new Date(0).toUTCString();
       }
       localStorage.removeItem("regionIds");
-
       this.$router.push({ name: "login" });
     },
   },
@@ -897,36 +906,36 @@ export default {
       handler: function() {
         this.searchParam.locId = Number(this.searchForm.inputRegion);
         this.searchParam.date = new Date(this.searchForm.inputDate).Format("yyyy-MM-dd")
-      },
-      deep: true
-    },
-    form: {
-      handler: function() {
-        if(
-          this.formPat.patData.length === 0 &&
-          this.form.countData.length === 0
-        ) {
-          this.disableSearch = false
+        var disableWarning = false
+        if(this.checkSearchParam(disableWarning)) {
+          this.clearData()
+          this.onSearch()
         }
       },
       deep: true
     },
-    formPat: {
-      handler: function() {
-        if(
-          this.formPat.patData.length === 0 &&
-          this.form.countData.length === 0
-        ) {
-          this.disableSearch = false
-        }
-      },
-      deep: true
-    },
-    // searchForm: {
+    // form: {
     //   handler: function() {
+    //     if(
+    //       this.formPat.patData.length === 0 &&
+    //       this.form.countData.length === 0
+    //     ) {
+    //       this.disableSearch = false
+    //     }
     //   },
     //   deep: true
-    // }
+    // },
+    // formPat: {
+    //   handler: function() {
+    //     if(
+    //       this.formPat.patData.length === 0 &&
+    //       this.form.countData.length === 0
+    //     ) {
+    //       this.disableSearch = false
+    //     }
+    //   },
+    //   deep: true
+    // },
   },
   mounted() {
     // 查询框地址项
