@@ -1,4 +1,4 @@
-# static2
+# ncov-dw
 
 ## Project setup
 ```
