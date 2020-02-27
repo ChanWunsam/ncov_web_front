@@ -44,8 +44,7 @@
 <script>
 // import qs from "query-string";
 import {
-  login,
-  deepCopyArr
+  login
 } from "@/util/util.js";
 
 export default {

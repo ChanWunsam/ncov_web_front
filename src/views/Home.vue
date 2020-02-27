@@ -249,19 +249,21 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column property="sampleSex" label="性别" width="100">
+          <el-table-column property="sampleType" label="类型" width="100">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit" 
-                :prop="'patData.' + scope.$index + '.sampleSex'" 
+                :prop="'patData.' + scope.$index + '.sampleType'" 
               >
-                <el-select v-model="scope.row.sampleSex" placeholder="">
-                  <el-option label="男" value="0">男</el-option>
-                  <el-option label="女" value="1">女</el-option>
+                <el-select v-model="scope.row.sampleType" placeholder="">
+                  <el-option label="新增确诊" value="1">新增确诊</el-option>
+                  <el-option label="新增康复" value="2">新增康复</el-option>
+                  <el-option label="新增死亡" value="3">新增死亡</el-option>
                 </el-select>
               </el-form-item>
               <span v-else>
-                <p v-if="scope.row.sampleSex==0">男</p>
-                <p v-if="scope.row.sampleSex==1">女</p>
+                <p v-if="scope.row.sampleType==1">新增确诊</p>
+                <p v-if="scope.row.sampleType==2">新增康复</p>
+                <p v-if="scope.row.sampleType==3">新增死亡</p>
               </span>
             </template>
           </el-table-column>
@@ -564,6 +566,7 @@ export default {
               id: res.data[i].id,
               sampleSex: res.data[i].sampleSex,
               sampleAge: res.data[i].sampleAge,
+              sampleType: res.data[i].sampleType,
               sampleConfirmTime: res.data[i].sampleConfirmTime,
               sampleSourceText: res.data[i].sampleSourceText,
               sampleSourceUrl: res.data[i].sampleSourceUrl,
@@ -718,6 +721,7 @@ export default {
         id: "",
         sampleSex: last_pat ? last_pat.sampleSex : "",
         sampleAge: last_pat ? last_pat.sampleAge : "",
+        sampleType: last_pat ? last_pat.sampleType : "",
         sampleConfirmTime: last_pat ? last_pat.sampleConfirmTime : "",
         sampleSourceText: last_pat ? last_pat.sampleSourceText : "",
         sampleSourceUrl: last_pat ? last_pat.sampleSourceUrl : "",
@@ -728,9 +732,7 @@ export default {
           value: ""
         }
       })
-      var newPat = this.formPat.patData[this.formPat.patData.length - 1]
-      this.readValue = newPat.sampleSex
-      newPat.sampleSex = String(this.readValue)
+      // var newPat = this.formPat.patData[this.formPat.patData.length - 1]
     },
     onSavePat(row) {
       if(!this.checkSearchParam() || !this.checkPat(row)) {
@@ -740,6 +742,7 @@ export default {
         sampleRegionId: row.locId[row.locId.length - 1],
         sampleSex: row.sampleSex,
         sampleAge: row.sampleAge,
+        sampleType: row.sampleType,
         sampleDate: new Date().Format(
           "yyyy-MM-dd"
         ), // 录入的时间
@@ -781,6 +784,7 @@ export default {
       } else {
         row.sampleSex = this.formPat.oldPatData[index].sampleSex
         row.sampleAge = this.formPat.oldPatData[index].sampleAge
+        row.sampleType = this.formPat.oldPatData[index].sampleType
         row.sampleConfirmTime = this.formPat.oldPatData[index].sampleConfirmTime
         row.sampleSourceText = this.formPat.oldPatData[index].sampleSourceText
         row.sampleSourceUrl = this.formPat.oldPatData[index].sampleSourceUrl
@@ -793,6 +797,8 @@ export default {
     onEditPat(row) {
       row.edit = true
       row.locId = []
+      row.sampleSex = String(row.sampleSex)
+      row.sampleType = String(row.sampleType)
       // this.reloadPat()
     },
     onDelPat(row) {
@@ -871,6 +877,7 @@ export default {
         isEmpty(pat.locId) ||
         isEmpty(pat.sampleSex) ||
         isEmpty(pat.sampleAge) ||
+        isEmpty(pat.sampleType) ||
         isEmpty(pat.sampleSourceText) ||
         isEmpty(pat.sampleSourceUrl)
       ) {
