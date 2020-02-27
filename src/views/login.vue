@@ -1,7 +1,7 @@
 <template>
   <div>
-    <div class="register-wrapper">
-      <div id="register">
+    <div class="login-wrapper">
+      <div id="login">
         <p class="title">登录</p>
         <el-form
           :model="ruleForm2"
@@ -42,14 +42,14 @@
 </template>
 
 <script>
-import qs from "query-string";
-import { 
-  register,
+// import qs from "query-string";
+import {
   login,
+  deepCopyArr
 } from "@/util/util.js";
 
 export default {
-  name: "Register",
+  name: "login",
   data() {
     // <!--验证手机号是否合法-->
     let checkTel = (rule, value, callback) => {
@@ -98,9 +98,10 @@ export default {
           login(param).then(res => {
             if (res.status === 0) {
               var homeParam = {
-                regionIds: res.data[0].region_id,
+                regions: res.data[0].region_info,
                 phone: this.ruleForm2.tel,
-                token: res.data[0].token
+                token: res.data[0].token,
+                admin: res.data[0].admin
               }
               this.gotoHome(homeParam)
             }
@@ -111,11 +112,16 @@ export default {
       });
     },
     gotoHome(param) {
-      localStorage.setItem("regionIds", param.regionIds);
+      // localStorage.setItem("regionIds", param.regionIds)
       localStorage.setItem("phone", param.phone);
       document.cookie = "token=" + escape(param.token)
+      this.$store.commit({
+        type: "login",
+        admin: param.admin,
+        regions: param.regions
+      })
       this.$router.push({
-        path: "/"
+        name: "home"
       });
     },
     gotoRegister() {
@@ -148,18 +154,18 @@ export default {
   align-items: center;
   justify-content: center;
 }
-.register-wrapper img {
+.login-wrapper img {
   position: absolute;
   z-index: 1;
 }
-.register-wrapper {
+.login-wrapper {
   position: fixed;
   top: 0;
   right: 0;
   left: 0;
   bottom: 0;
 }
-#register {
+#login {
   max-width: 340px;
   margin: 60px auto;
   background: #fff;

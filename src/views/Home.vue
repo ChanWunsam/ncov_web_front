@@ -13,6 +13,20 @@
         @click="logout"
       ></el-button>
     </el-tooltip>
+    <el-tooltip
+      class="item"
+      effect="dark"
+      content="管理"
+      v-if="admin === 1"
+      placement="top-start"
+    >
+      <el-button
+        icon="el-icon-setting"
+        style="float:right; position: absolute; top: 20px; right: 80px"
+        circle
+        @click="gotoAdmin"
+      ></el-button>
+    </el-tooltip>
     <div class="flex-box">
       <div class="flex-item">
         <el-container>
@@ -78,7 +92,7 @@
           :data="form.countData"
           style="width:100%"
         >
-          <el-table-column property="locName" label="地区" width="150">
+          <el-table-column property="locName" label="地区" width="100">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit">
                 <el-cascader
@@ -197,7 +211,7 @@
           :data="formPat.patData"
           style="width:100%"
         >
-          <el-table-column property="locName" label="地区" width="150">
+          <el-table-column property="locName" label="地区" width="100">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit">
                 <el-cascader
@@ -217,6 +231,22 @@
                 <el-input v-model="scope.row.sampleAge" placeholder=""></el-input>
               </el-form-item>
               <span v-else>{{scope.row.sampleAge}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column property="sampleSex" label="性别" width="100">
+            <template slot-scope="scope">
+              <el-form-item v-if="scope.row.edit" 
+                :prop="'patData.' + scope.$index + '.sampleSex'" 
+              >
+                <el-select v-model="scope.row.sampleSex" placeholder="">
+                  <el-option label="男" value="0">男</el-option>
+                  <el-option label="女" value="1">女</el-option>
+                </el-select>
+              </el-form-item>
+              <span v-else>
+                <p v-if="scope.row.sampleSex==0">男</p>
+                <p v-if="scope.row.sampleSex==1">女</p>
+              </span>
             </template>
           </el-table-column>
           <el-table-column property="sampleSex" label="性别" width="100">
@@ -369,8 +399,7 @@ import {
   modifyCase,
   deleteCase,
   deleteCount,
-  setLS,
-  scrollback
+  deepCopyArr
 } from "@/util/util.js";
 
 export default {
@@ -396,12 +425,13 @@ export default {
       }
     };
     return {
+      admin: 0,
       isFormPatAlive: true, // 用于强制刷新
       isFormAlive: true,
       disabledBtn: false,
       readValue: "", // 用于解决selcet框回显value的bug
       closeMsg: false, // 用于关掉删除统计信息后的无查询结果
-      disableSearch: false, // 点击确认按钮后，是否有疫情数据，无的话显示提交按钮，反之则无
+      disableSearch: false, // todo 删掉
       dialogVisible: false,
 
       form: {
@@ -467,29 +497,6 @@ export default {
     };
   },
   methods: {
-    setScroll() {
-      var scroll = document.documentElement.scrollTop;
-      setLS("scroll", scroll)
-    },
-    deepCopyArr(arr) {
-      return JSON.parse(JSON.stringify(arr));
-    },
-    reloadCount () {
-      this.setScroll()    
-      this.isFormAlive = false
-      this.$nextTick(function() {
-        this.isFormAlive = true
-        scrollback()
-      })
-    },
-    reloadPat () {
-      this.setScroll()
-      this.isFormPatAlive = false
-      this.$nextTick(function() {
-        this.isFormPatAlive = true
-        scrollback()
-      })
-    },
     // 注：仅用于判断输入值是否符合
     isEmpty(value) {
       if ((!value || (Array.isArray(value) && value.length === 0)) && value !== 0) { // value == 0 也不是 empty
@@ -528,7 +535,7 @@ export default {
             })
           }
           // this.disableSearch = true
-          this.form.oldCountData = this.deepCopyArr(this.form.countData)
+          this.form.oldCountData = deepCopyArr(this.form.countData)
           // this.reloadPat()
         } else {
           this.$message.error(res.desc);
@@ -561,7 +568,7 @@ export default {
               sampleSourceText: res.data[i].sampleSourceText,
               sampleSourceUrl: res.data[i].sampleSourceUrl,
               sampleCustomTag: res.data[i].sampleCustomTag,
-              locName: res.data[i].locName,
+              locName: res.data[i].locName.split('-').slice(2).join(' / '),
               edit: false,
               dialogVisible: false,
               newTag: {
@@ -571,7 +578,7 @@ export default {
             })
           }
           // this.disableSearch = true
-          this.formPat.oldPatData = this.deepCopyArr(this.formPat.patData)
+          this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
           // this.reloadPat()
         } else {
           this.$message.error(res.desc);
@@ -645,7 +652,7 @@ export default {
             this.$message.success("保存统计成功");
             row.edit = false;
             // this.getCount()
-            this.form.oldCountData = this.deepCopyArr(this.form.countData)
+            this.form.oldCountData = deepCopyArr(this.form.countData)
           } else {
             this.$message.error(res.desc)
           }
@@ -657,7 +664,7 @@ export default {
             this.$message.success("修改统计成功");
             row.edit = false;
             // this.getCount()
-            this.form.oldCountData = this.deepCopyArr(this.form.countData)
+            this.form.oldCountData = deepCopyArr(this.form.countData)
           } else {
             this.$message.error(res.desc)
           }
@@ -674,7 +681,6 @@ export default {
           forSaved.forEach((item) => {
             this.onSaveCount(item)
           })
-          this.getCount()
         }
       }
     },
@@ -750,7 +756,7 @@ export default {
             this.$message.success("保存病例成功");
             row.edit = false;
             // this.getPat()
-            this.formPat.oldPatData = this.deepCopyArr(this.formPat.patData)
+            this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
           } else {
             this.$message.error(res.desc)
           }
@@ -762,7 +768,7 @@ export default {
             this.$message.success("修改病例成功");
             row.edit = false;
             // this.getPat()
-            this.formPat.oldPatData = this.deepCopyArr(this.formPat.patData)
+            this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
           } else {
             this.$message.error(res.desc)
           }
@@ -812,7 +818,6 @@ export default {
           forSaved.forEach((item) => {
             this.onSavePat(item)
           })
-          this.getPat()
         }
       }
     },
@@ -890,6 +895,11 @@ export default {
       return true
     },
 
+    gotoAdmin() {
+      this.$router.push({
+        path: "/admin"
+      });
+    },
     logout() {
       // eslint-disable-next-line no-useless-escape
       var keys = document.cookie.match(/[^ =;]+(?=\=)/g);
@@ -897,7 +907,8 @@ export default {
         for (var i = keys.length; i--; )
           document.cookie = keys[i] + "=0;expires=" + new Date(0).toUTCString();
       }
-      localStorage.removeItem("regionIds");
+      // localStorage.removeItem("regionIds");
+      this.$store.commit('logout')
       this.$router.push({ name: "login" });
     },
   },
@@ -939,21 +950,14 @@ export default {
   },
   mounted() {
     // 查询框地址项
-    var regionIds = localStorage.getItem("regionIds").split(',')
-    for(var i = 0; i < regionIds.length; i++) {
-      getNextLoc({
-        locId: regionIds[i]
-      }).then(res => {
-        if(res) {
-          res.data.forEach(i => {
-            this.regions.push({
-              label: i.name, // todo 这里是不是加个省名
-              value: i.id
-            });
-          });
-        }
-      });
-    }
+    // var regionIds = localStorage.getItem("regionIds").split(',')
+    this.admin = this.$store.state.admin || 0;
+    this.$store.state.regions.forEach(region => {
+      this.regions.push({
+        label: region.name,
+        value: region.id
+      })
+    });
 
     (function() {
       // canvas 实现 watermark
@@ -1120,7 +1124,7 @@ export default {
 #nowData >>> .el-tag {
   height: auto;
   width: auto;
-  max-width: 90px;
+  max-width: 100px;
   white-space: normal;
 }
 </style>

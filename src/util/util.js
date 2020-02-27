@@ -174,6 +174,9 @@ function login(param) {
     param
   )
 }
+function deepCopyArr(arr) {
+  return JSON.parse(JSON.stringify(arr));
+}
 
 export {
   getNextLoc,
@@ -192,4 +195,5 @@ export {
   scrollback,
   register,
   login,
+  deepCopyArr
 }

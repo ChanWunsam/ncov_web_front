@@ -60,13 +60,12 @@
 </template>
 
 <script>
-import qs from "query-string";
+// import qs from "query-string";
 import { 
   register,
   login,
-  getNextLoc,
+  // getNextLoc,
 } from "@/util/util.js";
-import gotoHome from '../views/login.vue';
 
 export default {
   name: "Register",
@@ -146,17 +145,8 @@ export default {
           }
           register(param).then(res => {
             if (res.status === 0) {
-              // this.$message.success("注册成功")
-              login(param).then(res => {
-                if (res.status === 0) {
-                  var homeParam = {
-                    regionIds: res.data[0].region_id,
-                    phone: this.ruleForm2.tel,
-                    token: res.data[0].token
-                  }
-                  this.gotoHome(homeParam)
-                }
-              })
+              this.$message.success("注册成功")
+              this.gotoLogin()
             }
           })
         } else {
