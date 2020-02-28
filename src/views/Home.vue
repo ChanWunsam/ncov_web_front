@@ -502,6 +502,14 @@ export default {
   },
   methods: {
     // 注：仅用于判断输入值是否符合
+    message(type, msg) {
+      this.$message({
+        type: type,
+        message: msg,
+        showClose: true,
+        duration: 1500
+      })
+    },
     isEmpty(value) {
       if ((!value || (Array.isArray(value) && value.length === 0)) && value !== 0) { // value == 0 也不是 empty
         return true;
@@ -522,7 +530,7 @@ export default {
       getCount(this.searchParam).then(res => {
         if (res.status === 0) {
           if(res.data.length == 0) {
-            this.$message.success("无统计信息")
+            this.message("success", "无统计信息")
           }
           // 清空再逐个赋值，可以省去强制刷新
           this.form.countData = []
@@ -542,14 +550,14 @@ export default {
           this.form.oldCountData = deepCopyArr(this.form.countData)
           // this.reloadPat()
         } else {
-          this.$message.error(res.desc);
+          this.message("error", res.desc);
         }
       })
       .catch((res) => {
         this.clearData()
         if (res.status === 602) {
           if(!this.closeMsg) {
-            this.$message.error(res.desc);
+            this.message("error", res.desc);
           } else {
             this.closeMsg = false
           }
@@ -586,7 +594,7 @@ export default {
           this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
           // this.reloadPat()
         } else {
-          this.$message.error(res.desc);
+          this.message("error", res.desc);
         }
       })
     },
@@ -654,24 +662,24 @@ export default {
       if(!row.id) {
         insertCount(count).then(res => {
           if(res.status === 0) {
-            this.$message.success("保存统计成功");
+            this.message("success", "保存统计成功");
             row.edit = false;
             // this.getCount()
             this.form.oldCountData = deepCopyArr(this.form.countData)
           } else {
-            this.$message.error(res.desc)
+            this.message("error", res.desc)
           }
         })
       } else {
         count.id = row.id
         modifyCount(count).then(res => {
           if(res.status === 0) {
-            this.$message.success("修改统计成功");
+            this.message("success", "修改统计成功");
             row.edit = false;
             // this.getCount()
             this.form.oldCountData = deepCopyArr(this.form.countData)
           } else {
-            this.$message.error(res.desc)
+            this.message("error", res.desc)
           }
         })
       }
@@ -694,11 +702,11 @@ export default {
         .then(() => {
           deleteCount(row.id).then((res) => {
             if(res.status == 0) {
-              this.$message.success("删除统计成功");
+              this.message("success", "删除统计成功");
               this.closeMsg = true
               this.getAll()
-            } else {
-              this.$message.error(res.desc)
+            } else {            
+              this.message("error", res.desc)
             }
           })
         }).catch(() => {});
@@ -758,24 +766,24 @@ export default {
       if(!row.id) {
         insertCases(pat).then((res) => {
           if(res.status === 0) {
-            this.$message.success("保存病例成功");
+            this.message("success", "保存病例成功");
             row.edit = false;
             // this.getPat()
             this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
           } else {
-            this.$message.error(res.desc)
+            this.message("error", res.desc)
           }
         })
       } else {
         pat.id = row.id
         modifyCase(pat).then((res) => { 
           if(res.status === 0) {
-            this.$message.success("修改病例成功");
+            this.message("success", "修改病例成功");
             row.edit = false;
             // this.getPat()
             this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
           } else {
-            this.$message.error(res.desc)
+            this.message("error", res.desc)
           }
         })
       }
@@ -808,10 +816,10 @@ export default {
         .then(() => {
           deleteCase(row.id).then((res) => {
             if(res.status == 0) {
-              this.$message.success("删除病例成功");
+              this.message("success", "删除病例成功");
               this.getPat()
             } else {
-              this.$message.error(res.desc)
+              this.message("error", res.desc)
             }
           })
         }).catch(() => {});
@@ -831,11 +839,11 @@ export default {
     },
     onAddPatTag(row) {
       if(row.newTag.key.length > 10 || row.newTag.value.length > 10) {
-        this.$message.warning("标签各栏的输入不能超过10个单位长度")
+        this.message("warning", "标签各栏的输入不能超过10个单位长度")
         return false;
       }
       if(row.newTag.key.length === 0 || row.newTag.value.length === 0) {
-        this.$message.warning("标签各栏的输入不能为空")
+        this.message("warning", "标签各栏的输入不能为空")
         return false;
       }
       row.sampleCustomTag.push(row.newTag);
@@ -867,7 +875,7 @@ export default {
       var param = this.searchParam
       if(!param.locId || !param.date || param.date === "1970-01-01" || param.date === "NaN-aN-aN") {
         if(warning) {
-          this.$message.warning("请填入时间和地区")
+          this.message("warning", "请填入时间和地区")
         }
         return false
       }
@@ -883,7 +891,7 @@ export default {
         isEmpty(pat.sampleSourceText) ||
         isEmpty(pat.sampleSourceUrl)
       ) {
-        this.$message.warning("请填入所有的病例信息")
+        this.message("warning", "请填入所有的病例信息")
         return false
       }
       return true
@@ -898,7 +906,7 @@ export default {
         isEmpty(count.countSourceText) ||
         isEmpty(count.countSourceUrl)
       ) {
-        this.$message.warning("请填入所有的统计信息")
+        this.message("warning", "请填入所有的统计信息")
         return false
       }
       return true
