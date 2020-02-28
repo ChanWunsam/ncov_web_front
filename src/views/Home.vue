@@ -38,8 +38,7 @@
               :rules="rules"
             >
               <el-form-item label="地区" prop="inputRegion">
-                <el-select v-model="searchForm.inputRegion" placeholder="选择地区" 
-                  :disabled="disableSearch"
+                <el-select v-model="searchForm.inputRegion" placeholder="选择地区"
                   id="region"
                 >
                   <el-option
@@ -54,7 +53,6 @@
                 <el-date-picker
                   v-model="searchForm.inputDate"
                   type="date"
-                  :disabled="disableSearch"
                   placeholder="选择日期"
                   clearable
                 >
@@ -85,7 +83,6 @@
       <el-form
         :ref="form"
         :model="form"
-        v-if="isFormAlive"
         label-width="90px"
       >
         <el-table 
@@ -174,7 +171,7 @@
           <el-table-column label="操作" width="100">
             <template slot-scope="scope">
               <div v-if="scope.row.edit">
-                <el-button type="success" size="mini" @click="onSaveCount(scope.row)">
+                <el-button type="success" size="mini" @click="onSaveCount(scope.row, scope.$index)">
                   <span>保存</span>
                 </el-button>
                 <el-button type="primary" size="mini" @click="onCancelCount(scope.row, scope.$index)">
@@ -185,7 +182,7 @@
                 <el-button type="primary" size="mini" @click="onEditCount(scope.row)">
                   <span>编辑</span>
                 </el-button>
-                <el-button type="danger" size="mini" @click="onDelCount(scope.row)">
+                <el-button type="danger" size="mini" @click="onDelCount(scope.row, scope.$index)">
                   <span>删除</span>
                 </el-button>
               </div>
@@ -205,7 +202,6 @@
       <el-form
         :ref="formPat"
         :model="formPat"
-        v-if="isFormPatAlive"
         label-width="90px"
       >
         <el-table 
@@ -365,7 +361,7 @@
           <el-table-column label="操作" width="100">
             <template slot-scope="scope">
               <div v-if="scope.row.edit">
-                <el-button type="success" size="mini" @click="onSavePat(scope.row)">
+                <el-button type="success" size="mini" @click="onSavePat(scope.row, scope.$index)">
                   <span>保存</span>
                 </el-button>
                 <el-button type="primary" size="mini" @click="onCancelPat(scope.row, scope.$index)">
@@ -376,7 +372,7 @@
                 <el-button type="primary" size="mini" @click="onEditPat(scope.row)">
                   <span>编辑</span>
                 </el-button>
-                <el-button type="danger" size="mini" @click="onDelPat(scope.row)">
+                <el-button type="danger" size="mini" @click="onDelPat(scope.row, scope.$index)">
                   <span>删除</span>
                 </el-button>
               </div>
@@ -393,6 +389,7 @@
 <script>
 // import qs from "query-string";
 import { 
+  message,
   getNextLoc,
   getCount, 
   getCase,
@@ -429,12 +426,6 @@ export default {
     };
     return {
       admin: 0,
-      isFormPatAlive: true, // 用于强制刷新
-      isFormAlive: true,
-      disabledBtn: false,
-      readValue: "", // 用于解决selcet框回显value的bug
-      closeMsg: false, // 用于关掉删除统计信息后的无查询结果
-      disableSearch: false, // todo 删掉
       countLoading: false,
       patLoading: false,
 
@@ -473,7 +464,7 @@ export default {
         expandTrigger: 'hover',
         lazyLoad(node, resolve) {
           if(!window.vue.$data.searchParam.date || !window.vue.$data.searchParam.locId) {
-            this.$message.warning("请填入时间和地区")
+            this.message("warning", "请填入时间和地区")
             return false
           }
           var { level } = node;
@@ -493,7 +484,6 @@ export default {
               });
               window.vue.$data.regionDicts[item.id] = item.name
             });
-            // window.vue.$data.disableSearch = true
             resolve(nodes);
           });
         }
@@ -503,12 +493,7 @@ export default {
   methods: {
     // 注：仅用于判断输入值是否符合
     message(type, msg) {
-      this.$message({
-        type: type,
-        message: msg,
-        showClose: true,
-        duration: 1500
-      })
+      message(type, msg)
     },
     isEmpty(value) {
       if ((!value || (Array.isArray(value) && value.length === 0)) && value !== 0) { // value == 0 也不是 empty
@@ -520,19 +505,30 @@ export default {
     clearData() {
       this.form.countData = []
       this.formPat.patData = [];
-      // this.searchParam = {}
     },
     getAll() {
       this.getCount()
       this.getPat()
     },
-    getCount() {
+    getCount(index = null) {
+      this.countLoading = (index === null)
       getCount(this.searchParam).then(res => {
-        if (res.status === 0) {
-          if(res.data.length == 0) {
-            this.message("success", "无统计信息")
-          }
-          // 清空再逐个赋值，可以省去强制刷新
+        if(res.data.length == 0) {
+          this.message("success", "无统计信息")
+        }
+        if(index || index === 0) {
+          this.form.countData.splice(index, 1, {
+            id: res.data[index].id,
+            countConfirm: res.data[index].countConfirm,
+            countRecover: res.data[index].countRecover,
+            countDead: res.data[index].countDead,
+            countSourceText: res.data[index].countSourceText,
+            countSourceUrl: res.data[index].countSourceUrl,
+            locName: res.data[index].locName.split('-').slice(2).join(' / '),
+            edit: false
+          })
+        } else {
+          // 清空再逐个赋值，可以触发vue的更新，省去手动强制刷新
           this.form.countData = []
           for(var i = 0; i < res.data.length; i++) {
             this.form.countData.push({
@@ -546,30 +542,35 @@ export default {
               edit: false
             })
           }
-          this.countLoading = false
-          this.form.oldCountData = deepCopyArr(this.form.countData)
-          // this.reloadPat()
-        } else {
-          this.message("error", res.desc);
         }
-      })
-      .catch((res) => {
-        this.clearData()
-        if (res.status === 602) {
-          if(!this.closeMsg) {
-            this.message("error", res.desc);
-          } else {
-            this.closeMsg = false
-          }
-        }
+        this.form.oldCountData = deepCopyArr(this.form.countData)
       })
       .finally(() => {
-        this.disabledBtn = false;
+        this.countLoading = false
       });
     },
-    getPat() {
+    getPat(index = null) {
+      this.patLoading = (index === null)
       getCase(this.searchParam).then(res => {
-        if(res.status === 0) {
+        if(index || index === 0) {
+          this.formPat.patData.splice(index, 1, {
+            id: res.data[index].id,
+            sampleSex: res.data[index].sampleSex,
+            sampleAge: res.data[index].sampleAge,
+            sampleType: res.data[index].sampleType,
+            sampleConfirmTime: res.data[index].sampleConfirmTime,
+            sampleSourceText: res.data[index].sampleSourceText,
+            sampleSourceUrl: res.data[index].sampleSourceUrl,
+            sampleCustomTag: res.data[index].sampleCustomTag,
+            locName: res.data[index].locName.split('-').slice(2).join(' / '),
+            edit: false,
+            dialogVisible: false,
+            newTag: {
+              key: "",
+              value: ""
+            }
+          })
+        } else {
           this.formPat.patData = []
           for(var i = 0; i < res.data.length; i++) {
             this.formPat.patData.push({
@@ -590,25 +591,13 @@ export default {
               }
             })
           }
-          this.patLoading = false
-          this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
-          // this.reloadPat()
-        } else {
-          this.message("error", res.desc);
         }
+        this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
+      })
+      .finally(() => {
+        this.patLoading = false
       })
     },
-    // onSearch() {
-    //   this.searchParam.locId = Number(this.searchForm.inputRegion);
-    //   this.searchParam.date = new Date(this.searchForm.inputDate).Format("yyyy-MM-dd")
-    //   if(this.checkSearchParam()) {
-    //     this.getAll()
-    //   }
-    // },
-    // onReturn() {
-    //   this.clearData()
-    //   // this.disableSearch = false
-    // },
 
     onAddCount() {
       if(!this.checkSearchParam()) {
@@ -629,7 +618,6 @@ export default {
     onEditCount(row) {
       row.edit = true
       row.locId = []
-      // this.reloadCount()
     },
     onCancelCount(row, index) {
       if(!row.id) {
@@ -646,7 +634,7 @@ export default {
         // this.getCount()
       }
     },
-    onSaveCount(row) {
+    onSaveCount(row, index) {
       if(!this.checkSearchParam() || !this.checkCount(row)) {
         return false
       }
@@ -660,27 +648,19 @@ export default {
         countSourceText: row.countSourceText,
       };
       if(!row.id) {
-        insertCount(count).then(res => {
-          if(res.status === 0) {
-            this.message("success", "保存统计成功");
-            row.edit = false;
-            // this.getCount()
-            this.form.oldCountData = deepCopyArr(this.form.countData)
-          } else {
-            this.message("error", res.desc)
-          }
+        insertCount(count).then(() => {
+          this.message("success", "保存统计成功");
+          row.edit = false;
+          this.getCount(index)
+          // this.form.oldCountData = deepCopyArr(this.form.countData)
         })
       } else {
         count.id = row.id
-        modifyCount(count).then(res => {
-          if(res.status === 0) {
-            this.message("success", "修改统计成功");
-            row.edit = false;
-            // this.getCount()
-            this.form.oldCountData = deepCopyArr(this.form.countData)
-          } else {
-            this.message("error", res.desc)
-          }
+        modifyCount(count).then(() => {
+          this.message("success", "修改统计成功");
+          row.edit = false;
+          // this.getCount()
+          this.form.oldCountData = deepCopyArr(this.form.countData)
         })
       }
     },
@@ -691,23 +671,19 @@ export default {
         })
         // 先检查所有的填空是否有效，再逐个保存
         if(forSaved.every(this.checkCount)) {
-          forSaved.forEach((item) => {
-            this.onSaveCount(item)
+          forSaved.forEach((item, index) => {
+            this.onSaveCount(item, index)
           })
         }
       }
     },
-    onDelCount(row) {
+    onDelCount(row, index) {
       this.$confirm("将同时删除对应的所有病例，确认删除统计？")
         .then(() => {
-          deleteCount(row.id).then((res) => {
-            if(res.status == 0) {
-              this.message("success", "删除统计成功");
-              this.closeMsg = true
-              this.getAll()
-            } else {            
-              this.message("error", res.desc)
-            }
+          deleteCount(row.id).then(() => {
+            this.message("success", "删除统计成功");
+            this.form.countData.splice(index, 1)
+            // this.getAll()
           })
         }).catch(() => {});
     },
@@ -742,17 +718,16 @@ export default {
           value: ""
         }
       })
-      // var newPat = this.formPat.patData[this.formPat.patData.length - 1]
     },
-    onSavePat(row) {
+    onSavePat(row, index) {
       if(!this.checkSearchParam() || !this.checkPat(row)) {
         return false
       }
       var pat = {
         sampleRegionId: row.locId[row.locId.length - 1],
-        sampleSex: row.sampleSex,
-        sampleAge: row.sampleAge,
-        sampleType: row.sampleType,
+        sampleSex: Number(row.sampleSex),
+        sampleAge: Number(row.sampleAge),
+        sampleType: Number(row.sampleType),
         sampleDate: new Date().Format(
           "yyyy-MM-dd"
         ), // 录入的时间
@@ -764,27 +739,19 @@ export default {
         sampleCustomTag: row.sampleCustomTag,
       }
       if(!row.id) {
-        insertCases(pat).then((res) => {
-          if(res.status === 0) {
-            this.message("success", "保存病例成功");
-            row.edit = false;
-            // this.getPat()
-            this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
-          } else {
-            this.message("error", res.desc)
-          }
+        insertCases(pat).then(() => {
+          this.message("success", "保存病例成功");
+          row.edit = false;
+          this.getPat(index)
+          // this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
         })
       } else {
         pat.id = row.id
-        modifyCase(pat).then((res) => { 
-          if(res.status === 0) {
-            this.message("success", "修改病例成功");
-            row.edit = false;
-            // this.getPat()
-            this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
-          } else {
-            this.message("error", res.desc)
-          }
+        modifyCase(pat).then(() => {
+          this.message("success", "修改病例成功");
+          row.edit = false;
+          // this.getPat()
+          this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
         })
       }
     },
@@ -809,18 +776,14 @@ export default {
       row.locId = []
       row.sampleSex = String(row.sampleSex)
       row.sampleType = String(row.sampleType)
-      // this.reloadPat()
     },
-    onDelPat(row) {
+    onDelPat(row, index) {
       this.$confirm("确认删除病例？")
         .then(() => {
-          deleteCase(row.id).then((res) => {
-            if(res.status == 0) {
-              this.message("success", "删除病例成功");
-              this.getPat()
-            } else {
-              this.message("error", res.desc)
-            }
+          deleteCase(row.id).then(() => {
+            this.message("success", "删除病例成功");
+            this.formPat.patData.splice(index, 1)
+            // this.getPat()
           })
         }).catch(() => {});
     },
@@ -852,14 +815,12 @@ export default {
         value: ""
       }
       row.dialogVisible = false
-      // this.reloadPat()
     },
     onDelPatTag(row, tag) {
       row.sampleCustomTag.splice(
         row.sampleCustomTag.indexOf(tag),
         1
       )
-      // this.reloadPat()
     },
     onCancelPatTag(row) {
       row.dialogVisible = false
@@ -938,34 +899,10 @@ export default {
         if(this.checkSearchParam(disableWarning)) {
           this.clearData()
           this.getAll()
-          this.countLoading = true
-          this.patLoading = true
         }
       },
       deep: true
     },
-    // form: {
-    //   handler: function() {
-    //     if(
-    //       this.formPat.patData.length === 0 &&
-    //       this.form.countData.length === 0
-    //     ) {
-    //       this.disableSearch = false
-    //     }
-    //   },
-    //   deep: true
-    // },
-    // formPat: {
-    //   handler: function() {
-    //     if(
-    //       this.formPat.patData.length === 0 &&
-    //       this.form.countData.length === 0
-    //     ) {
-    //       this.disableSearch = false
-    //     }
-    //   },
-    //   deep: true
-    // },
   },
   mounted() {
     // 查询框地址项

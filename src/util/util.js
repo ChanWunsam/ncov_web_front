@@ -5,21 +5,14 @@ import {
 } from 'element-ui'
 var request = Vue.axios
 
-function errorMsg(error) {
+function message(type, msg) {
   Message({
-    message: error,
-    type: 'error',
-    duration: 3 * 500
+    type: type,
+    message: msg,
+    showClose: true,
+    duration: 1500
   })
 }
-
-// function Msg(error) {
-//   Message({
-//     message: error,
-//     type: 'error',
-//     duration: 3 * 500
-//   })
-// }
 
 function promisePost(url, param) {
   return new Promise(function (resolve, reject) {
@@ -30,11 +23,11 @@ function promisePost(url, param) {
       if (res.data.status == 0) {
         resolve(res.data)
       } else {
-        errorMsg(res.data.desc)
+        message("error", res.data.desc)
         reject(res.data)
       }
     }).catch(err => {
-      errorMsg(err)
+      message("error", err)
       reject(err)
     })
   })
@@ -52,27 +45,8 @@ function getCount(param) {
     "/api/mark/info/getCount", 
     param
   )
-  // return new Promise(function (resolve, reject) {
-  //   request.post(
-  //     "/api/mark/info/getCount", 
-  //     param
-  //   ).then(res => {
-  //     if (res.data.status == 0) {
-  //       resolve(res.data)
-  //     } 
-  //     else if(res.data.status === 602) {
-  //       reject(res.data) // 无查询结果特殊处理
-  //     } 
-  //     else {
-  //       errorMsg(res.data.desc)
-  //       reject(res.data)
-  //     }
-  //   }).catch(err => {
-  //     errorMsg(err)
-  //     reject(err)
-  //   })
-  // })
 }
+
 function getCase(param) {
   return promisePost(
     "/api/mark/info/getPat",
@@ -179,6 +153,7 @@ function deepCopyArr(arr) {
 }
 
 export {
+  message,
   getNextLoc,
   getCount,
   getCase,
