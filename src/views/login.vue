@@ -111,14 +111,15 @@ export default {
       });
     },
     gotoHome(param) {
-      // localStorage.setItem("regionIds", param.regionIds)
+      localStorage.setItem("regions", JSON.stringify(param.regions))
       localStorage.setItem("phone", param.phone);
+      localStorage.setItem("admin", param.admin)
       document.cookie = "token=" + escape(param.token)
-      this.$store.commit({
-        type: "login",
-        admin: param.admin,
-        regions: param.regions
-      })
+      // this.$store.commit({
+      //   type: "login",
+      //   admin: param.admin,
+      //   regions: param.regions
+      // })
       this.$router.push({
         name: "home"
       });

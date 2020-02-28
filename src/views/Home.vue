@@ -90,6 +90,7 @@
       >
         <el-table 
           :data="form.countData"
+          v-loading="countLoading"
           style="width:100%"
         >
           <el-table-column property="locName" label="地区" width="100">
@@ -193,8 +194,8 @@
         </el-table> 
       </el-form>
     </div>
-    <el-button type="primary" @click="onAddCount" style="margin: 10px">添加统计</el-button> 
-    <el-button type="success" @click="onSaveAllCounts" style="margin-top: 10px">保存所有统计</el-button>
+    <el-button type="primary" @click="onAddCount" style="margin: 10px" :disabled="countLoading">添加统计</el-button> 
+    <el-button type="success" @click="onSaveAllCounts" style="margin-top: 10px" :disabled="countLoading">保存所有统计</el-button>
     
     <p 
       class="title" 
@@ -209,6 +210,7 @@
       >
         <el-table 
           :data="formPat.patData"
+          v-loading="patLoading"
           style="width:100%"
         >
           <el-table-column property="locName" label="地区" width="100">
@@ -383,9 +385,8 @@
         </el-table> 
       </el-form>
     </div>
-    <el-button type="primary" @click="onAddPat" style="margin-top: 10px">添加病例</el-button> 
-    <el-button type="success" @click="onSaveAllPats" style="margin-top: 10px">保存所有病例</el-button>
-
+    <el-button type="primary" @click="onAddPat" style="margin-top: 10px" :disabled="patLoading">添加病例</el-button> 
+    <el-button type="success" @click="onSaveAllPats" style="margin-top: 10px" :disabled="patLoading">保存所有病例</el-button>
   </div>
 </template>
 
@@ -434,7 +435,8 @@ export default {
       readValue: "", // 用于解决selcet框回显value的bug
       closeMsg: false, // 用于关掉删除统计信息后的无查询结果
       disableSearch: false, // todo 删掉
-      dialogVisible: false,
+      countLoading: false,
+      patLoading: false,
 
       form: {
         countData: [],
@@ -536,7 +538,7 @@ export default {
               edit: false
             })
           }
-          // this.disableSearch = true
+          this.countLoading = false
           this.form.oldCountData = deepCopyArr(this.form.countData)
           // this.reloadPat()
         } else {
@@ -580,7 +582,7 @@ export default {
               }
             })
           }
-          // this.disableSearch = true
+          this.patLoading = false
           this.formPat.oldPatData = deepCopyArr(this.formPat.patData)
           // this.reloadPat()
         } else {
@@ -588,17 +590,17 @@ export default {
         }
       })
     },
-    onSearch() {
-      this.searchParam.locId = Number(this.searchForm.inputRegion);
-      this.searchParam.date = new Date(this.searchForm.inputDate).Format("yyyy-MM-dd")
-      if(this.checkSearchParam()) {
-        this.getAll()
-      }
-    },
-    onReturn() {
-      this.clearData()
-      // this.disableSearch = false
-    },
+    // onSearch() {
+    //   this.searchParam.locId = Number(this.searchForm.inputRegion);
+    //   this.searchParam.date = new Date(this.searchForm.inputDate).Format("yyyy-MM-dd")
+    //   if(this.checkSearchParam()) {
+    //     this.getAll()
+    //   }
+    // },
+    // onReturn() {
+    //   this.clearData()
+    //   // this.disableSearch = false
+    // },
 
     onAddCount() {
       if(!this.checkSearchParam()) {
@@ -914,8 +916,8 @@ export default {
         for (var i = keys.length; i--; )
           document.cookie = keys[i] + "=0;expires=" + new Date(0).toUTCString();
       }
-      // localStorage.removeItem("regionIds");
-      this.$store.commit('logout')
+      localStorage.removeItem("regions");
+      localStorage.removeItem("admin");
       this.$router.push({ name: "login" });
     },
   },
@@ -927,7 +929,9 @@ export default {
         var disableWarning = false
         if(this.checkSearchParam(disableWarning)) {
           this.clearData()
-          this.onSearch()
+          this.getAll()
+          this.countLoading = true
+          this.patLoading = true
         }
       },
       deep: true
@@ -958,13 +962,14 @@ export default {
   mounted() {
     // 查询框地址项
     // var regionIds = localStorage.getItem("regionIds").split(',')
-    this.admin = this.$store.state.admin || 0;
-    this.$store.state.regions.forEach(region => {
+    this.admin = Number(localStorage.getItem("admin")) || 0;
+    var regions = JSON.parse(localStorage.getItem("regions")) || [];
+    for(var i = 0; i < regions.length; i++) {
       this.regions.push({
-        label: region.name,
-        value: region.id
+        label: regions[i].name,
+        value: regions[i].id
       })
-    });
+    }
 
     (function() {
       // canvas 实现 watermark
