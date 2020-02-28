@@ -191,7 +191,7 @@
         </el-table> 
       </el-form>
     </div>
-    <el-button type="primary" @click="onAddCount" style="margin: 10px" :disabled="countLoading">添加统计</el-button> 
+    <el-button type="primary" @click="onAddCount" style="margin: 0px" :disabled="countLoading">添加统计</el-button> 
     <el-button type="success" @click="onSaveAllCounts" style="margin-top: 10px" :disabled="countLoading">保存所有统计</el-button>
     
     <p 
@@ -684,6 +684,7 @@ export default {
             this.message("success", "删除统计成功");
             this.form.countData.splice(index, 1)
             // this.getAll()
+            this.getPat()
           })
         }).catch(() => {});
     },
@@ -794,8 +795,8 @@ export default {
         })
         // 先检查所有的填空是否有效，再逐个保存
         if(forSaved.every(this.checkPat)) {
-          forSaved.forEach((item) => {
-            this.onSavePat(item)
+          forSaved.forEach((item, index) => {
+            this.onSavePat(item, index)
           })
         }
       }
