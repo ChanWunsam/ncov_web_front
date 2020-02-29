@@ -399,7 +399,8 @@ import {
   modifyCase,
   deleteCase,
   deleteCount,
-  deepCopyArr
+  deepCopyArr,
+  isEmpty
 } from "@/util/util.js";
 
 export default {
@@ -494,13 +495,6 @@ export default {
     // 注：仅用于判断输入值是否符合
     message(type, msg) {
       message(type, msg)
-    },
-    isEmpty(value) {
-      if ((!value || (Array.isArray(value) && value.length === 0)) && value !== 0) { // value == 0 也不是 empty
-        return true;
-      } else {
-        return false;
-      }
     },
     clearData() {
       this.form.countData = []
@@ -844,7 +838,6 @@ export default {
       return true
     },
     checkPat(pat) {
-      var isEmpty = this.isEmpty
       if (
         isEmpty(pat.locId) ||
         isEmpty(pat.sampleSex) ||
@@ -859,7 +852,6 @@ export default {
       return true
     },
     checkCount(count) {
-      var isEmpty = this.isEmpty
       if (
         isEmpty(count.locId) ||
         isEmpty(count.countConfirm) ||

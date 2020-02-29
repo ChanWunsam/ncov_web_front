@@ -18,16 +18,18 @@
         <el-tab-pane label="用户权限">
           <el-container>
             <el-main>
-              <el-row :gutter="10" type="flex" justify="center" align="middle">
+              <el-row :gutter="5" type="flex" justify="center" align="middle">
                 <el-col :span="10">
                   <el-input v-model="phone" placeholder="输入手机号"></el-input>
                 </el-col>
-                <el-col :span="5">
+                <el-col :span="3">
                   <el-button type="info" @click="onSearchUser(phone)">查询</el-button>
-                  <el-button type="success" v-show="showInfo" @click="onUpdateUser(phone, curCities)">保存</el-button>
+                </el-col>
+                <el-col :span="2">
+                  <el-button type="success" v-show="showSave" @click="onUpdateUser(phone, curCities)">保存</el-button>
                 </el-col>
               </el-row>
-              <el-container v-show="showInfo">
+              <el-container>
                 <el-main id="curCities">
                   <el-row :gutter="1" type="flex" justify="start" style="min-height: 215px; margin-bottom: 20px; flex-flow: wrap; align-content: flex-start;">
                     <el-tag 
@@ -70,7 +72,7 @@
         <el-tab-pane label="地区新增">
           <el-container>
             <el-main>
-              <el-row :gutter="10" type="flex" justify="center" align="middle">
+              <el-row :gutter="15" type="flex" justify="center" align="middle">
                 <el-col :span="8">
                   <el-cascader
                     style="width: 100%"
@@ -101,13 +103,15 @@ import {
   getNextLoc,
   getUserInfo,
   updateUserInfo,
+  isEmpty
 } from "@/util/util.js";
 
 export default {
   name: "admin",
   data() {
     return {
-      showInfo: false,
+      showSave: false,
+      hasSearched: false,
       phone: "",
       curCities: [],
       selPro: "",
@@ -154,47 +158,56 @@ export default {
       })
     },
     onSearchUser(phone) {
-      if(!phone) {
-        message("warning", "请输入手机号")
-        return false
-      }
-      getUserInfo({
-        phone: phone
-      }).then(res => {
-        this.curCities = []
-        var regions = res.data[0].region_info
-        if(regions.length === 0) {
-          message("info", "无地区权限")
-        } else {
-          for(var i = 0; i < regions.length; i++) {
-            this.curCities.push({
-              label: regions[i].name,
-              value: regions[i].id
-            })
+      if(this.checkPhone(phone)) {
+        getUserInfo({
+          phone: phone
+        }).then(res => {
+          this.curCities = []
+          var regions = res.data[0].region_info
+          if(regions.length === 0) {
+            message("info", "无地区权限")
+          } else {
+            for(var i = 0; i < regions.length; i++) {
+              this.curCities.push({
+                label: regions[i].name,
+                value: regions[i].id
+              })
+            }
           }
-        }
-        this.showInfo = true
-      })
+          this.hasSearched = true
+        })
+      }
     },
     onUpdateUser(phone, curCities) {
-      if(!phone) {
-        message("warning", "请输入手机号")
+      if(!this.hasSearched) {
+        message("warning", "请先查询用户信息")
         return false
       }
-      var locIds = curCities.map(city => city.value)
-      updateUserInfo({
-        phone: phone,
-        region_id: locIds
-      }).then(() => {
-        message("success", "保存成功")
-      })
+      if(this.checkPhone(phone)) {
+        this.$confirm("确认保存？").then(() => {
+          var locIds = curCities.map(city => city.value)
+          updateUserInfo({
+            phone: phone,
+            region_id: locIds
+          }).then(() => {
+            message("success", "保存成功")
+          })
+        })
+      }
     },
     onAddUserCity(cityIds) {
-      for(let i = 0; i < cityIds.length; i++) {
-        var name = this.regionDict[cityIds[i]].name
-        this.curCities.push({
-          label: name,
-          value: cityIds[i]
+      if(this.checkPhone(this.phone)) {
+        this.$confirm("确认保存？").then(() => {
+          var curCityIds = this.curCities.map(item => item.value)
+          for(let i = 0; i < cityIds.length; i++) {
+            if(!curCityIds.includes(cityIds[i])) {
+              var name = this.regionDict[cityIds[i]].name
+              this.curCities.push({
+                label: name,
+                value: cityIds[i]
+              })
+            }
+          } 
         })
       }
     },
@@ -207,13 +220,38 @@ export default {
     onAddRegion(newRegionForm) {
       var partnerId = newRegionForm.locIds[newRegionForm.locIds.length - 1]
       var level = this.regionDict[partnerId].level
-      insertLoc({
+      if(this.checkNewRegion({
         partnerId: partnerId,
         level: level,
         name: newRegionForm.name
-      }).then(() => {
-        message("success", "添加子地区成功")
-      })
+      })) {
+        insertLoc({
+          partnerId: partnerId,
+          level: level,
+          name: newRegionForm.name
+        }).then(() => {
+          message("success", "添加子地区成功")
+        })
+      }
+    },
+
+    checkPhone(phone) {
+      if(isEmpty(phone)) {
+        message("warning", "请输入手机号")
+        return false
+      }
+      return true
+    },
+    checkNewRegion(param) {
+      if(
+        isEmpty(param.partnerId) ||
+        isEmpty(param.level) ||
+        isEmpty(param.name)
+      ) {
+        message("warning", "请选择上级地区并填入新增地区名")
+        return false
+      }
+      return true
     }
   },
   watch: {
@@ -237,6 +275,22 @@ export default {
             }
           }
         })
+      },
+      deep: true
+    },
+    curCities: {
+      handler: function() {
+        if(this.hasSearched) {
+          this.showSave = true
+        }
+      },
+      deep: true
+    },
+    phone: {
+      handler: function() {
+        this.showSave = false
+        this.curCities = []
+        this.hasSearched = false
       },
       deep: true
     }

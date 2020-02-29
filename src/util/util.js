@@ -260,6 +260,15 @@ function debounce(func, delay = 1000, immediate = false){
   }
 }
 
+
+function isEmpty(value) {
+  if ((!value || (Array.isArray(value) && value.length === 0)) && value !== 0) { // value == 0 也不是 empty
+    return true;
+  } else {
+    return false;
+  }
+}
+
 export {
   message,
   insertLoc,
@@ -283,4 +292,5 @@ export {
   scrollback,
   deepCopyArr,
   debounce,
+  isEmpty,
 }
