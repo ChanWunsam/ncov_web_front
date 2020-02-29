@@ -680,7 +680,7 @@ export default {
     onDelCount(row, index) {
       this.$confirm("将同时删除对应的所有病例，确认删除统计？")
         .then(() => {
-          deleteCount(row.id).then(() => {
+          deleteCount({countId: row.id}).then(() => {
             this.message("success", "删除统计成功");
             this.form.countData.splice(index, 1)
             // this.getAll()
@@ -781,7 +781,7 @@ export default {
     onDelPat(row, index) {
       this.$confirm("确认删除病例？")
         .then(() => {
-          deleteCase(row.id).then(() => {
+          deleteCase({patId: row.id}).then(() => {
             this.message("success", "删除病例成功");
             this.formPat.patData.splice(index, 1)
             // this.getPat()

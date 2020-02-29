@@ -36,21 +36,40 @@ function promisePost(url, param) {
 function getNextLoc(param) {
   return promisePost(
     "/api/mark/info/getNextLoc",
-    param
+    {
+      locId: param.locId
+    }
+  )
+}
+
+function insertLoc(param) {
+  return promisePost(
+    "/api/mark/region/insert",
+    {
+      partnerId: param.partnerId,
+      level: param.level,
+      name: param.name
+    }
   )
 }
 
 function getCount(param) {
   return promisePost(
     "/api/mark/info/getCount", 
-    param
+    {
+      locId: param.locId,
+      date: param.date
+    }
   )
 }
 
 function getCase(param) {
   return promisePost(
     "/api/mark/info/getPat",
-    param
+    {
+      locId: param.locId,
+      date: param.date
+    }
   )
 }
 
@@ -59,23 +78,49 @@ function getCase(param) {
 function insertCount(param) {
   return promisePost(
     "/api/mark/count/insert", 
-    param
+    {
+      countRegionId: param.countRegionId,
+      countDate: param.countDate,
+      countConfirm: param.countConfirm,
+      countRecover: param.countRecover,
+      countDead: param.countDead,
+      countSourceUrl: param.countSourceUrl,
+      countSourceText: param.countSourceText,
+    }
   )
 }
 
 
 function insertCases(param) {
-  // 这里不返回stringify
   return promisePost(
     "/api/mark/sample/insert", 
-    param
+    {
+      sampleRegionId: param.sampleRegionId,
+      sampleSex: param.sampleSex,
+      sampleAge: param.sampleAge,
+      sampleType: param.sampleType,
+      sampleDate: param.sampleDate,
+      sampleConfirmTime: param.sampleConfirmTime,
+      sampleSourceUrl: param.sampleSourceUrl,
+      sampleSourceText: param.sampleSourceText,
+      sampleCustomTag: param.sampleCustomTag,
+    }
   )
 }
 
 function modifyCount(param) {
   return promisePost(
     "/api/mark/count/update", 
-    param
+    {
+      id: param.id,
+      countRegionId: param.countRegionId,
+      countDate: param.countDate,
+      countConfirm: param.countConfirm,
+      countRecover: param.countRecover,
+      countDead: param.countDead,
+      countSourceUrl: param.countSourceUrl,
+      countSourceText: param.countSourceText,
+    }
   )
 }
 
@@ -83,21 +128,75 @@ function modifyCount(param) {
 function modifyCase(param) {
   return promisePost(
     "/api/mark/sample/update",
-    param
+    {
+      id: param.id,
+      sampleRegionId: param.sampleRegionId,
+      sampleSex: param.sampleSex,
+      sampleAge: param.sampleAge,
+      sampleType: param.sampleType,
+      sampleDate: param.sampleDate,
+      sampleConfirmTime: param.sampleConfirmTime,
+      sampleSourceUrl: param.sampleSourceUrl,
+      sampleSourceText: param.sampleSourceText,
+      sampleCustomTag: param.sampleCustomTag,
+    }
   )
 }
 
-function deleteCase(id) {
+function deleteCase(param) {
   return promisePost(
     "/api/mark/sample/delete", 
-    { patId: id }
+    { 
+      patId: param.patId
+    }
   )
 }
 
-function deleteCount(id) {
+function deleteCount(param) {
   return promisePost(
     "/api/mark/count/delete",
-    { countId: id }
+    { 
+      countId: param.countId
+    }
+  )
+}
+
+function register(param) {
+  return promisePost(
+    "/api/mark/user/register", 
+    {
+      phone: param.phone,
+      password: param.password
+    }
+  )
+}
+
+function login(param) {
+  return promisePost(
+    "/api/mark/user/login", 
+    {
+      phone: param.phone,
+      password: param.password
+    }
+  )
+}
+
+function getUserInfo(param) {
+  return promisePost(
+    "/api/mark/user/info",
+    { 
+      phone: param.phone 
+    }
+  )
+}
+
+function updateUserInfo(param) {
+  return promisePost(
+    "/api/mark/user/update",
+    {
+      phone: param.phone,
+      region_id: param.region_id
+    }
   )
 }
 
@@ -135,25 +234,35 @@ function scrollback() {
   }    
 }    
 
-function register(param) {
-  return promisePost(
-    "/api/mark/user/register", 
-    param
-  )
-}
-
-function login(param) {
-  return promisePost(
-    "/api/mark/user/login", 
-    param
-  )
-}
 function deepCopyArr(arr) {
   return JSON.parse(JSON.stringify(arr));
 }
 
+function debounce(func, delay = 1000, immediate = false){
+  var timer = null;
+  return function(){
+    var context = this;
+    var args = arguments;
+    if(timer) clearTimeout(timer);
+    if(immediate){
+      var doNow = !timer;
+      timer = setTimeout(function(){
+        timer = null;
+      }, delay);
+      if(doNow){
+        func.apply(context,args);
+      }
+    }else{
+      timer = setTimeout(function(){
+        func.apply(context,args);
+      }, delay);
+    }
+  }
+}
+
 export {
   message,
+  insertLoc,
   getNextLoc,
   getCount,
   getCase,
@@ -163,12 +272,15 @@ export {
   modifyCase,
   deleteCase,
   deleteCount,
+  register,
+  login,
+  getUserInfo,
+  updateUserInfo,
   setCookie,
   getCookie,
   getLS,
   setLS,
   scrollback,
-  register,
-  login,
-  deepCopyArr
+  deepCopyArr,
+  debounce,
 }
