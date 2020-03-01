@@ -196,20 +196,16 @@ export default {
       }
     },
     onAddUserCity(cityIds) {
-      if(this.checkPhone(this.phone)) {
-        this.$confirm("确认保存？").then(() => {
-          var curCityIds = this.curCities.map(item => item.value)
-          for(let i = 0; i < cityIds.length; i++) {
-            if(!curCityIds.includes(cityIds[i])) {
-              var name = this.regionDict[cityIds[i]].name
-              this.curCities.push({
-                label: name,
-                value: cityIds[i]
-              })
-            }
-          } 
-        })
-      }
+      var curCityIds = this.curCities.map(item => item.value)
+      for(let i = 0; i < cityIds.length; i++) {
+        if(!curCityIds.includes(cityIds[i])) {
+          var name = this.regionDict[cityIds[i]].name
+          this.curCities.push({
+            label: name,
+            value: cityIds[i]
+          })
+        }
+      } 
     },
     onDelUserCity(city) {
       this.curCities.splice(
@@ -225,12 +221,14 @@ export default {
         level: level,
         name: newRegionForm.name
       })) {
-        insertLoc({
-          partnerId: partnerId,
-          level: level,
-          name: newRegionForm.name
-        }).then(() => {
-          message("success", "添加子地区成功")
+        this.$confirm("确认保存？").then(() => {
+          insertLoc({
+            partnerId: partnerId,
+            level: level,
+            name: newRegionForm.name
+          }).then(() => {
+            message("success", "添加子地区成功")
+          })
         })
       }
     },

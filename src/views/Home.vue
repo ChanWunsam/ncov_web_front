@@ -34,6 +34,7 @@
             <el-form
               ref="searchForm"
               :model="searchForm"
+              id="searchForm"
               label-width="100px"
               :rules="rules"
             >
@@ -53,8 +54,8 @@
                 <el-date-picker
                   v-model="searchForm.inputDate"
                   type="date"
-                  placeholder="选择日期"
                   clearable
+                  placeholder="选择日期"
                 >
                 </el-date-picker>
               </el-form-item>
@@ -429,6 +430,7 @@ export default {
       admin: 0,
       countLoading: false,
       patLoading: false,
+      // allRegions: [],
 
       form: {
         countData: [],
@@ -611,7 +613,7 @@ export default {
     },
     onEditCount(row) {
       row.edit = true
-      row.locId = []
+      // row.locId = []
     },
     onCancelCount(row, index) {
       if(!row.id) {
@@ -768,7 +770,7 @@ export default {
     },
     onEditPat(row) {
       row.edit = true
-      row.locId = []
+      // row.locId = []
       row.sampleSex = String(row.sampleSex)
       row.sampleType = String(row.sampleType)
     },
@@ -865,6 +867,38 @@ export default {
       }
       return true
     },
+    // getSubRegions(parent) {
+    //   if(Array.isArray(parent) && parent.length === 0) { // 初始状态
+    //     getNextLoc({locId: 0}).then(res => {
+    //       var regions = res.data
+    //       if(regions.length > 0) {
+    //         for(let i = 0; i < regions.length; i++) {
+    //           parent.push({
+    //             label: res.data[i].name,
+    //             value: res.data[i].id
+    //           })
+    //           this.getSubRegions(parent[i])
+    //         }
+    //       }
+    //     })
+    //   } else if(parent.value) {
+    //     getNextLoc({locId: parent.value}).then(res => {
+    //       var regions = res.data
+    //       if(regions.length > 0) {
+    //         parent.children = []
+    //         for(let i = 0; i < regions.length; i++) {
+    //           parent.children.push({
+    //             label: res.data[i].name,
+    //             value: res.data[i].id
+    //           })
+    //           this.getSubRegions(parent.children[i])
+    //         }
+    //       }
+    //     })
+    //   } else {
+    //     console.log(parent)
+    //   }
+    // },
 
     gotoAdmin() {
       this.$router.push({
@@ -908,6 +942,9 @@ export default {
         value: regions[i].id
       })
     }
+
+    // this.getSubRegions(this.allRegions);
+
 
     (function() {
       // canvas 实现 watermark
@@ -1076,5 +1113,11 @@ export default {
   width: auto;
   max-width: 100px;
   white-space: normal;
+}
+#searchForm >>> .el-date-editor {
+  cursor: pointer;
+}
+#searchForm >>> .el-date-editor input {
+  cursor: pointer;
 }
 </style>
