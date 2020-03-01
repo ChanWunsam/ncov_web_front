@@ -91,7 +91,7 @@
           v-loading="countLoading"
           style="width:100%"
         >
-          <el-table-column property="locName" label="地区" width="100">
+          <el-table-column property="locName" label="地区" width="150">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit">
                 <el-cascader
@@ -103,7 +103,7 @@
               <span v-else>{{scope.row.locName}}</span>
             </template>
           </el-table-column>
-          <el-table-column property="countConfirm" label="新增确诊" width="100">
+          <el-table-column property="countConfirm" label="新增确诊" width="80">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit" 
                 :prop="'countData.' + scope.$index + '.countConfirm'"
@@ -113,7 +113,7 @@
               <span v-else>{{scope.row.countConfirm}}</span>
             </template>
           </el-table-column>
-          <el-table-column property="countRecover" label="新增康复" width="100">
+          <el-table-column property="countRecover" label="新增康复" width="80">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit" 
                 :prop="'countData.' + scope.$index + '.countRecover'"
@@ -123,7 +123,7 @@
               <span v-else>{{scope.row.countRecover}}</span>
             </template>
           </el-table-column>
-          <el-table-column property="countDead" label="新增死亡" width="100">
+          <el-table-column property="countDead" label="新增死亡" width="80">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit" 
                 :prop="'countData.' + scope.$index + '.countDead'"
@@ -210,7 +210,7 @@
           v-loading="patLoading"
           style="width:100%"
         >
-          <el-table-column property="locName" label="地区" width="100">
+          <el-table-column property="locName" label="地区" width="150">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit">
                 <el-cascader
@@ -222,7 +222,7 @@
               <span v-else>{{scope.row.locName}}</span>
             </template>
           </el-table-column>
-          <el-table-column property="sampleAge" label="年龄" width="100">
+          <el-table-column property="sampleAge" label="年龄" width="80">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit" 
                 :prop="'patData.' + scope.$index + '.sampleAge'"
@@ -232,7 +232,7 @@
               <span v-else>{{scope.row.sampleAge}}</span>
             </template>
           </el-table-column>
-          <el-table-column property="sampleSex" label="性别" width="100">
+          <el-table-column property="sampleSex" label="性别" width="80">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit" 
                 :prop="'patData.' + scope.$index + '.sampleSex'" 
@@ -248,21 +248,21 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column property="sampleType" label="类型" width="100">
+          <el-table-column property="sampleType" label="类型" width="80">
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit" 
                 :prop="'patData.' + scope.$index + '.sampleType'" 
               >
                 <el-select v-model="scope.row.sampleType" placeholder="">
-                  <el-option label="新增确诊" value="1">新增确诊</el-option>
-                  <el-option label="新增康复" value="2">新增康复</el-option>
-                  <el-option label="新增死亡" value="3">新增死亡</el-option>
+                  <el-option label="确诊" value="1"></el-option>
+                  <el-option label="康复" value="2"></el-option>
+                  <el-option label="死亡" value="3"></el-option>
                 </el-select>
               </el-form-item>
               <span v-else>
-                <p v-if="scope.row.sampleType==1">新增确诊</p>
-                <p v-if="scope.row.sampleType==2">新增康复</p>
-                <p v-if="scope.row.sampleType==3">新增死亡</p>
+                <p v-if="scope.row.sampleType==1">确诊</p>
+                <p v-if="scope.row.sampleType==2">康复</p>
+                <p v-if="scope.row.sampleType==3">死亡</p>
               </span>
             </template>
           </el-table-column>
@@ -306,6 +306,7 @@
             <template slot-scope="scope">
               <el-form-item v-if="scope.row.edit" 
                 :prop="'patData.' + scope.$index + '.sampleCustomTag'" 
+                id="tagFormItem"
               >
                 <el-tag
                   v-for="tag in scope.row.sampleCustomTag"
@@ -316,9 +317,11 @@
                 >
                   {{tag.key}}:{{tag.value}}
                 </el-tag>
-                <el-button class="button-new-tag" size="small" 
+                <el-button size="small" 
                   @click="scope.row.dialogVisible=true"
-                >+ New Tag</el-button>
+                  type="primary"
+                  style="margin-top: 5px"
+                >添加</el-button>
               </el-form-item>
               <span v-else>
                 <span v-if="scope.row.sampleCustomTag.length > 0">
@@ -326,6 +329,7 @@
                     v-for="tag in scope.row.sampleCustomTag"
                     :key="tag.key"
                     size="small"
+                    style="margin-right: 2px"
                   >
                     {{tag.key}}:{{tag.value}}
                   </el-tag>
@@ -1119,5 +1123,8 @@ export default {
 }
 #searchForm >>> .el-date-editor input {
   cursor: pointer;
+}
+#tagFormItem >>> .el-form-item__content {
+  line-height: 30px;
 }
 </style>

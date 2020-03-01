@@ -23,7 +23,7 @@
                   <el-input v-model="phone" placeholder="输入手机号"></el-input>
                 </el-col>
                 <el-col :span="3">
-                  <el-button type="info" @click="onSearchUser(phone)">查询</el-button>
+                  <el-button type="primary" @click="onSearchUser(phone)">查询</el-button>
                 </el-col>
                 <el-col :span="2">
                   <el-button type="success" v-show="showSave" @click="onUpdateUser(phone, curCities)">保存</el-button>
