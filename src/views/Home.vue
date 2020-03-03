@@ -708,7 +708,7 @@ export default {
         id: "",
         sampleSex: last_pat ? last_pat.sampleSex : "",
         sampleAge: last_pat ? last_pat.sampleAge : "",
-        sampleType: last_pat ? last_pat.sampleType : "",
+        sampleType: last_pat ? last_pat.sampleType : "1",
         sampleConfirmTime: last_pat ? last_pat.sampleConfirmTime : "",
         sampleSourceText: last_pat ? last_pat.sampleSourceText : "",
         sampleSourceUrl: last_pat ? last_pat.sampleSourceUrl : "",
